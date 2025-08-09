@@ -24,6 +24,7 @@ import * as Sharing from 'expo-sharing';
 import { useBookings } from '@/hooks/useBookings';
 import * as Clipboard from 'expo-clipboard';
 import { razorpayService } from '@/services/razorpay';
+import { Modal } from '@/components/ui/Modal';
 
 
 const BookingDetails = () => {
@@ -35,6 +36,10 @@ const BookingDetails = () => {
   const [cancelling, setCancelling] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const { refresh: refreshBookings } = useBookings();
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const imageScrollViewRef = useRef<ScrollView>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -241,6 +246,69 @@ const BookingDetails = () => {
       await Clipboard.setStringAsync(booking.bookingReference);
       Alert.alert('Copied', 'Booking ID copied to clipboard');
     }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!booking || !reviewComment.trim()) {
+      Alert.alert('Error', 'Please enter a comment for your review');
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      
+      const reviewData = {
+        bookingId: booking.id,
+        hotelId: booking.hotelId,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      };
+
+      const response = await apiService.post('/reviews', reviewData);
+      
+      if (response.success) {
+        Alert.alert(
+          'Review Submitted',
+          'Thank you for your feedback!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setShowReviewModal(false);
+                setReviewComment('');
+                setReviewRating(5);
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', response.error || 'Failed to submit review');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const renderStars = (rating: number, onPress?: (rating: number) => void) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity
+          key={i}
+          onPress={() => onPress?.(i)}
+          disabled={!onPress}
+        >
+          <Star
+            size={32}
+            color={i <= rating ? '#FCD34D' : '#D1D5DB'}
+            fill={i <= rating ? '#FCD34D' : '#D1D5DB'}
+          />
+        </TouchableOpacity>
+      );
+    }
+    return stars;
   };
 
   const formatDate = (dateString: string) => {
@@ -1216,56 +1284,141 @@ const BookingDetails = () => {
         <View className="h-8" />
       </ScrollView>
 
-      {/* Bottom Payment Section - Hide when refund info exists */}
+      {/* Bottom Payment/Review Section - Hide when refund info exists */}
       {!booking.refundInfo && (
         <View className=" px-6 py-4">
           <View className="bg-white rounded-xl p-4">
             <View className="flex-row gap-3">
-              {/* Pay at Hotel Button - Always show */}
-              {booking.paymentStaus === 'pending' && <TouchableOpacity className="flex-1 py-2 px-4 rounded-lg border border-gray-300 bg-gray-50">
-                <Text className="text-center text-black text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                  Pay at hotel
-                </Text>
-              </TouchableOpacity>
-              }
-
-              {
-                booking.paymentStaus === 'completed' &&
+              {/* Show review button for completed bookings */}
+              {booking.status === 'completed' ? (
                 <TouchableOpacity
-                  className="flex-1 py-2 px-4 rounded-lg bg-green-500 relative"
+                  className="flex-1 py-2 px-4 rounded-lg bg-black"
+                  onPress={() => setShowReviewModal(true)}
                 >
-                  <>
-                    <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                      Payment Sucessful
-                    </Text>
-                  </>
+                  <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                    Review your stay
+                  </Text>
                 </TouchableOpacity>
-              }
-
-              {/* Pay Now Button - Only show if onlinePaymentEnabled is true */}
-              {booking.onlinePaymentEnabled && booking.paymentStaus === 'pending' && (
-                <TouchableOpacity
-                  className="flex-1 py-2 px-4 rounded-lg bg-black relative"
-                  onPress={handlePayNow}
-                  disabled={paymentLoading}
-                >
-                  {paymentLoading ? (
-                    <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                      Loading...
+              ) : (
+                <>
+                  {/* Pay at Hotel Button - Always show */}
+                  {booking.paymentStaus === 'pending' && <TouchableOpacity className="flex-1 py-2 px-4 rounded-lg border border-gray-300 bg-gray-50">
+                    <Text className="text-center text-black text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                      Pay at hotel
                     </Text>
-                  ) : (
-                    <>
-                      <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                        Pay now
-                      </Text>
-                    </>
+                  </TouchableOpacity>
+                  }
+
+                  {
+                    booking.paymentStaus === 'completed' &&
+                    <TouchableOpacity
+                      className="flex-1 py-2 px-4 rounded-lg bg-green-500 relative"
+                    >
+                      <>
+                        <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                          Payment Sucessful
+                        </Text>
+                      </>
+                    </TouchableOpacity>
+                  }
+
+                  {/* Pay Now Button - Only show if onlinePaymentEnabled is true */}
+                  {booking.onlinePaymentEnabled && booking.paymentStaus === 'pending' && (
+                    <TouchableOpacity
+                      className="flex-1 py-2 px-4 rounded-lg bg-black relative"
+                      onPress={handlePayNow}
+                      disabled={paymentLoading}
+                    >
+                      {paymentLoading ? (
+                        <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                          Loading...
+                        </Text>
+                      ) : (
+                        <>
+                          <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                            Pay now
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
                   )}
-                </TouchableOpacity>
+                </>
               )}
             </View>
           </View>
         </View>
       )}
+
+      {/* Review Modal */}
+      <Modal
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        animationType="slide"
+      >
+        <View className="bg-white rounded-t-3xl px-6 py-6" style={{ width: 350, maxHeight: 500 }}>
+          {/* Header */}
+          <View className="flex-row items-center justify-between mb-6">
+            <Text className="text-2xl text-gray-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              Review your stay
+            </Text>
+            <TouchableOpacity onPress={() => setShowReviewModal(false)} className="p-2">
+              <X size={24} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Hotel Info */}
+          <View className="mb-6">
+            <Text className="text-lg text-gray-900 mb-1" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+              {booking.hotelName}
+            </Text>
+            <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+              {booking.roomType}
+            </Text>
+          </View>
+
+          {/* Rating */}
+          <View className="mb-6">
+            <Text className="text-lg text-gray-900 mb-3" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+              Overall rating
+            </Text>
+            <View className="flex-row items-center gap-2">
+              {renderStars(reviewRating, setReviewRating)}
+            </View>
+          </View>
+
+          {/* Comment */}
+          <View className="mb-6">
+            <Text className="text-lg text-gray-900 mb-3" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+              Share your experience
+            </Text>
+            <TextInput
+              className="border border-gray-300 rounded-lg p-4 text-base h-24"
+              style={{ fontFamily: 'PlusJakartaSans-Regular', textAlignVertical: 'top' }}
+              placeholder="Tell us about your stay..."
+              placeholderTextColor="#9CA3AF"
+              value={reviewComment}
+              onChangeText={setReviewComment}
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+
+          {/* Submit Button */}
+          <TouchableOpacity
+            className={`w-full py-4 rounded-lg items-center ${submittingReview ? 'bg-gray-400' : 'bg-black'}`}
+            onPress={handleSubmitReview}
+            disabled={submittingReview}
+          >
+            {submittingReview ? (
+              <LoadingSpinner size="small" color="white" />
+            ) : (
+              <Text className="text-white text-lg" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                Submit Review
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
     </SafeAreaView>
   );
