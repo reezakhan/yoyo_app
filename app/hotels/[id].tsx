@@ -9,6 +9,7 @@ import {
   StatusBar,
   Alert,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useNavigation } from 'expo-router';
@@ -35,7 +36,7 @@ interface SelectedAddon extends Addon {
 }
 
 const HotelDetails = () => {
-  const { id, guests, checkIn, checkOut ,bookingType} = useLocalSearchParams();
+  const { id, guests, checkIn, checkOut, bookingType } = useLocalSearchParams();
   const navigation = useNavigation()
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +52,8 @@ const HotelDetails = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const { addToWishlist, removeFromWishlistByHotelId, isInWishlist } = useWishlist();
+
+  
 
   // Wishlist handlers
   const handleWishlistToggle = async () => {
@@ -84,7 +87,7 @@ const HotelDetails = () => {
       params.append('guests', searchParams.guests);
       params.append('checkIn', searchParams.checkIn);
       params.append('checkOut', searchParams.checkOut);
-      params.append('bookingType',searchParams.bookingType)
+      params.append('bookingType', searchParams.bookingType)
 
       const queryString = params.toString();
       const url = `/hotels/${id}/details?${queryString}`;
@@ -93,7 +96,7 @@ const HotelDetails = () => {
 
       const response = await apiService.get(url);
 
-
+      console.log('response in hotel details ', JSON.stringify(response))
 
       if (response.success) {
         setHotel(response.data.hotel);
@@ -147,13 +150,15 @@ const HotelDetails = () => {
 
   // Helper function to get all image URLs
   const getAllImageUrls = (images) => {
+
+    console.log('images came re ', images)
     if (!images || images.length === 0) {
       return ['https://via.placeholder.com/400x300?text=No+Image'];
     }
-    
+
     // Handle different image formats from backend
     let imageUrls = [];
-    
+
     if (Array.isArray(images)) {
       imageUrls = images.map(img => getImageUrl(img));
     } else if (images.primary) {
@@ -163,14 +168,15 @@ const HotelDetails = () => {
         imageUrls.push(...images.gallery);
       }
     }
-    
+
     // Filter out null/undefined URLs and ensure we have at least one image
     imageUrls = imageUrls.filter(url => url && url.trim() !== '');
-    
+
     if (imageUrls.length === 0) {
       return ['https://via.placeholder.com/400x300?text=No+Image'];
     }
-    
+
+
     return imageUrls;
   };
 
@@ -202,22 +208,22 @@ const HotelDetails = () => {
             selectedDate: searchParams.checkIn.split('T')[0],
             startDateTime: searchParams.checkIn,
             endDateTime: searchParams.checkOut,
-            startTime: new Date(searchParams.checkIn).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit', 
-              hour12: true 
+            startTime: new Date(searchParams.checkIn).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
             }),
-            endTime: new Date(searchParams.checkOut).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit', 
-              hour12: true 
+            endTime: new Date(searchParams.checkOut).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
             })
           } : undefined,
           bookingType: searchParams.bookingType
         },
         onSearch: (newSearchData) => {
           const totalGuests = newSearchData.guests.adults + newSearchData.guests.children;
-          
+
           if (newSearchData.bookingType === 'daily' && newSearchData.dateRange) {
             setSearchParams({
               guests: totalGuests.toString(),
@@ -323,7 +329,7 @@ const HotelDetails = () => {
   // Handle booking
   const handleBookNow = () => {
     if (!areRoomsAvailable()) return;
-
+    console.log('selectedRoom ',selectedRoom)
     const bookingData = {
       hotelId: hotel.id,
       roomId: selectedRoom?.id || hotel.roomUpgradeData?.currentRoom?.id,
@@ -337,8 +343,8 @@ const HotelDetails = () => {
       selectedAddons: JSON.stringify(selectedAddons),
       addonTotal: calculateAddonTotal(),
       address: hotel.address,
-      image: hotel.images?.[0] || 'https://via.placeholder.com/400x300',
-      bookingType:searchParams.bookingType
+      image: selectedRoom.images[0].url || 'https://via.placeholder.com/400x300',
+      bookingType: searchParams.bookingType
     };
 
 
@@ -349,7 +355,7 @@ const HotelDetails = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner fullScreen text="Loading hotel details..." />;
+    return <LoadingSpinner  text="Loading hotel details..." />;
   }
 
   if (error || !hotel) {
@@ -380,36 +386,54 @@ const HotelDetails = () => {
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="light-content" />
 
-      <ScrollView className="flex-1">
+      <ScrollView
+        className="flex-1"
+        nestedScrollEnabled={true}
+        scrollEnabled={true}
+      >
         <View className="relative">
           <ScrollView
             ref={imageScrollViewRef}
-            horizontal
-            pagingEnabled
+            horizontal={true} // Explicitly set to true
+            pagingEnabled={true} // Explicitly set to true
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(event) => {
               const contentOffset = event.nativeEvent.contentOffset.x;
               const viewSize = event.nativeEvent.layoutMeasurement.width;
               const pageIndex = Math.round(contentOffset / viewSize);
               setCurrentImageIndex(pageIndex);
+              console.log('Current page index:', pageIndex); // Debug log
             }}
-            className="h-80"
+
+            // Add these props for better debugging:
+            bounces={false}
+            decelerationRate="fast"
+            snapToInterval={Dimensions.get('window').width}
+            snapToAlignment="center"
+            style={{ height: 320 }}  // Add this line
+            contentContainerStyle={{
+              width: imageUrls.length * Dimensions.get('window').width,
+              height: 320  // Add this line too
+            }}
+            nestedScrollEnabled={true}
+            scrollEventThrottle={16}
+            directionalLockEnabled={true}
           >
             {imageUrls.map((imageUrl, index) => (
               <View key={index} style={{ width: Dimensions.get('window').width }}>
                 <Image
                   source={{ uri: imageUrl }}
-                  className="w-full h-80"
-                  style={{ resizeMode: 'cover' }}
+                  style={{ width: '100%', height: 320, resizeMode: 'cover' }}
+                  // style={{ resizeMode: 'cover' }}
+                  onError={(error) => console.log('Image load error:', error)} // Debug image loading
                 />
               </View>
             ))}
           </ScrollView>
 
-          {/* Overlay */}
-          <View className="absolute inset-0 bg-black/40" />
+          {/* Rest of your overlay code... */}
+          {/* <View className="absolute inset-0 bg-black/40" /> */}
 
-          {/* Wishlist Heart Icon */}
           <HeartIcon
             isInWishlist={isInWishlist(hotel.id)}
             onPress={handleWishlistToggle}
@@ -417,7 +441,6 @@ const HotelDetails = () => {
             className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full items-center justify-center"
           />
 
-          {/* Image Indicators - only show if more than 1 image */}
           {imageUrls.length > 1 && (
             <View className="absolute bottom-5 left-0 right-0 flex-row justify-center gap-2">
               {imageUrls.map((_, index) => (
@@ -439,25 +462,69 @@ const HotelDetails = () => {
 
         {/* Hotel Info */}
         <View className="p-5 pb-6">
-          <View className="flex-row items-start justify-between">
+          <View className="flex-row items-start justify-between mb-3">
             <View className="flex-1">
               <Text className="text-2xl text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                 {hotel.name}
               </Text>
-              <Text className="mt-1 text-stone-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                {hotel.address}
-              </Text>
-              {hotel.starRating && (
+              {/* {hotel.starRating && (
                 <Text className="mt-1 text-stone-600" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                   {hotel.starRating}
                 </Text>
-              )}
+              )} */}
             </View>
 
             <View className="flex-row items-center gap-1">
               <Ionicons name="star" size={20} color="#facc15" />
               <Text className="text-lg text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                 {currentRating > 0 ? currentRating.toFixed(1) : 'New'}
+              </Text>
+            </View>
+          </View>
+
+          <View className='flex-row items-center justify-between gap-4'>
+            <View className="flex-1 flex-row items-start gap-2">
+              <Ionicons name="location" size={16} color="#6b7280" className="mt-0.5" />
+              <Text
+                className="flex-1 text-stone-500"
+                style={{ fontFamily: 'PlusJakartaSans-Regular' }}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {hotel.address}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                // Open in maps
+                const url = `https://maps.google.com/?q=${encodeURIComponent(hotel.address)}`;
+                Linking.openURL(url);
+              }}
+              className="p-2 bg-stone-100 rounded-full"
+            >
+              <Ionicons name="navigate" size={18} color="#374151" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View className=" p-5 border-t  border-stone-200">
+          <Text className="text-lg text-stone-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+            Why Book YoyoLite?
+          </Text>
+          <View className="flex-row gap-4">
+            <View className="flex-1 bg-stone-100 rounded-xl p-4 items-center">
+              <Text className="text-sm text-stone-900 text-center" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                100% Verified{'\n'}Clean Rooms
+              </Text>
+            </View>
+            <View className="flex-1 bg-stone-100 rounded-xl p-4 items-center">
+              <Text className="text-sm text-stone-900 text-center" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                Express{'\n'}Check-in
+              </Text>
+            </View>
+            <View className="flex-1 bg-stone-100 rounded-xl p-4 items-center">
+              <Text className="text-sm text-stone-900 text-center" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                No{'\n'}Hidden Charges
               </Text>
             </View>
           </View>
@@ -486,15 +553,15 @@ const HotelDetails = () => {
                 {searchParams.bookingType === 'daily' ? 'Check-in' : 'Start time'}
               </Text>
               <Text className="text-base text-stone-900" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
-                {searchParams.bookingType === 'daily' 
+                {searchParams.bookingType === 'daily'
                   ? formatDate(searchParams.checkIn)
                   : new Date(searchParams.checkIn).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })
                 }
               </Text>
             </View>
@@ -504,15 +571,15 @@ const HotelDetails = () => {
                 {searchParams.bookingType === 'daily' ? 'Check-out' : 'End time'}
               </Text>
               <Text className="text-base text-stone-900" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
-                {searchParams.bookingType === 'daily' 
+                {searchParams.bookingType === 'daily'
                   ? formatDate(searchParams.checkOut)
                   : new Date(searchParams.checkOut).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })
                 }
               </Text>
             </View>
@@ -586,24 +653,32 @@ const HotelDetails = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Room Upgrades */}
+        {/* Room Upgrades - Keep existing UI, just change onPress */}
         <View className="border-b border-stone-200 p-5">
           <Text className="text-lg text-stone-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Room Options</Text>
 
           <View className="gap-4">
-            {/* Current Room */}
+            {/* Current Room - Only change onPress */}
             {hotel.roomUpgradeData?.currentRoom && (
               <TouchableOpacity
-                onPress={() => handleRoomSelect(hotel.roomUpgradeData.currentRoom)}
-                className={`flex-row items-center gap-4 p-4 border rounded-xl ${
-                  selectedRoom?.id === hotel.roomUpgradeData.currentRoom.id 
-                    ? 'border-black bg-black/5' 
-                    : 'border-stone-200'
-                }`}
+                onPress={() => SheetManager.show('roomSelection', {
+                  payload: {
+                    hotel: hotel,
+                    selectedRoomFromMain: hotel.roomUpgradeData.currentRoom, // Pass the specific room that was clicked
+                    currentRoom: selectedRoom || hotel.roomUpgradeData?.currentRoom,
+                    onRoomSelect: handleRoomSelect,
+                    bookingType: searchParams.bookingType
+                  }
+                })}
+                className={`flex-row items-center gap-4 p-4 border rounded-xl ${selectedRoom?.id === hotel.roomUpgradeData.currentRoom.id
+                  ? 'border-black bg-black/5'
+                  : 'border-stone-200'
+                  }`}
               >
+                {/* Keep all existing content exactly the same */}
                 <Image
                   source={{
-                    uri: hotel.roomUpgradeData.currentRoom.image || imageUrls[0]
+                    uri: hotel.roomUpgradeData.currentRoom.images[0].url || imageUrls[0]
                   }}
                   className="w-24 h-24 rounded-lg"
                   style={{ resizeMode: 'cover' }}
@@ -626,23 +701,31 @@ const HotelDetails = () => {
                     {hotel.roomUpgradeData.currentRoom.features}
                   </Text>
                   <Text className="mt-1 text-sm text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                    ₹{hotel.roomUpgradeData.currentRoom.displayPrice}/ {bookingType==='hourly'?'hour':'night'}
+                    ₹{hotel.roomUpgradeData.currentRoom.displayPrice}/ {bookingType === 'hourly' ? 'hour' : 'night'}
                   </Text>
                 </View>
               </TouchableOpacity>
             )}
 
-            {/* Upgrade Options */}
+            {/* Upgrade Options - Only change onPress for each */}
             {hotel.roomUpgradeData?.upgradeOptions?.map((room, index) => (
               <TouchableOpacity
                 key={index}
-                onPress={() => handleRoomSelect(room)}
-                className={`flex-row items-center gap-4 p-4 border rounded-xl ${
-                  selectedRoom?.id === room.id 
-                    ? 'border-black bg-black/5' 
-                    : 'border-stone-200'
-                }`}
+                onPress={() => SheetManager.show('roomSelection', {
+                  payload: {
+                    hotel: hotel,
+                    selectedRoomFromMain: room, // Pass the specific room that was clicked
+                    currentRoom: selectedRoom || hotel.roomUpgradeData?.currentRoom,
+                    onRoomSelect: handleRoomSelect,
+                    bookingType: searchParams.bookingType
+                  }
+                })}
+                className={`flex-row items-center gap-4 p-4 border rounded-xl ${selectedRoom?.id === room.id
+                  ? 'border-black bg-black/5'
+                  : 'border-stone-200'
+                  }`}
               >
+                {/* Keep all existing content exactly the same */}
                 <Image
                   source={{
                     uri: room.image || imageUrls[0]
@@ -668,7 +751,7 @@ const HotelDetails = () => {
                     {room.features}
                   </Text>
                   <Text className="mt-1 text-sm text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                    ₹{room.displayPrice}/{bookingType==='hourly'?'hour':'night'}
+                    ₹{room.displayPrice}/{bookingType === 'hourly' ? 'hour' : 'night'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -874,10 +957,10 @@ const HotelDetails = () => {
                   </Text>
                 )}
               </View>
-              <Text className="text-stone-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>/{bookingType==='hourly'?'hour':'night'}</Text>
+              <Text className="text-stone-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>/{searchParams.bookingType === 'hourly' ? 'hour' : 'night'}</Text>
               {selectedAddons.length > 0 && (
                 <Text className="text-sm text-stone-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                  Total: ₹{getTotalPrice().toLocaleString()}/{bookingType==='hourly'?'hour':'night'}
+                  Total: ₹{getTotalPrice().toLocaleString()}/{searchParams.bookingType === 'hourly' ? 'hour' : 'night'}
                 </Text>
               )}
             </View>

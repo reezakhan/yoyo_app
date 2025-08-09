@@ -23,5 +23,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    flex: 1
   },
 });

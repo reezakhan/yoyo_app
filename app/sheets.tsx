@@ -16,7 +16,20 @@ import { RatingFilterActionSheet } from '@/components/ui/RatingFilterActionSheet
 import { AmenitiesFilterActionSheet } from '@/components/ui/AmenitiesFilterActionSheet';
 import { OffersActionSheet } from '@/components/ui/OffersActionSheet';
 import { ModifyGuestNameActionSheet } from '@/components/ui/ModifyGuestNameActionSheet';
+import { RoomSelectionSheet } from '@/components/ui/RoomSelectionSheet';
 
+export const SHEET_IDS = {
+  PROFILE_OPTIONS: 'profile-options',
+  AMENITIES: 'amenities',
+  REVIEWS: 'reviews',
+  UPGRADEROOM: 'upgraderoom',
+  SEARCH: 'search',
+  CONTACT_HOTEL: 'contact-hotel',
+  MODIFY_BOOKING: 'modify-booking',
+  FILTERS: 'filters',
+  ADDON_SELECTION: 'addon-selection',
+  ROOM_SELCTION: 'roomSelection'
+} as const;
 
 registerSheet('profile-options', CustomActionSheet);
 registerSheet('amenities', AmenitiesActionSheet);
@@ -35,19 +48,11 @@ registerSheet('rating-filter', RatingFilterActionSheet);
 registerSheet('amenities-filter', AmenitiesFilterActionSheet);
 registerSheet('offers-filter', OffersActionSheet);
 registerSheet('modify-guest-name', ModifyGuestNameActionSheet);
+registerSheet(SHEET_IDS.ROOM_SELCTION, RoomSelectionSheet);
+
 
 // Export the sheet IDs for type safety
-export const SHEET_IDS = {
-  PROFILE_OPTIONS: 'profile-options',
-  AMENITIES: 'amenities',
-  REVIEWS:'reviews',
-  UPGRADEROOM:'upgraderoom',
-  SEARCH : 'search',
-  CONTACT_HOTEL: 'contact-hotel',
-  MODIFY_BOOKING: 'modify-booking',
-  FILTERS: 'filters',
-  ADDON_SELECTION: 'addon-selection'
-} as const;
+
 
 // export type SheetId = typeof SHEET_IDS[keyof typeof SHEET_IDS];
 

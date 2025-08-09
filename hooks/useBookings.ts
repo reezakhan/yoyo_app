@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/services/api';
 
-// Types based on your API documentation
 export interface Booking {
   id: string;
   userId: string;
@@ -24,107 +23,82 @@ export function useBookings() {
   const [refreshing, setRefreshing] = useState(false);
   const [total, setTotal] = useState(0);
 
-  const fetchBookings = async (isRefresh = false, status?: string) => {
+  // Use a single base path; adjust if your backend differs
+  const BASE = '/api/v1';
+
+  const fetchBookings = useCallback(async (isRefresh = false, status?: string) => {
     try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
       setError(null);
 
-      // Build query parameters
       const params = new URLSearchParams();
-      if (status) {
-        params.append('status', status);
-      }
-      params.append('limit', '50'); // Get more items at once
-      
-      const queryString = params.toString();
-      const endpoint = `/bookings/user/me${queryString ? `?${queryString}` : ''}`;
+      if (status) params.append('status', status);
+      params.append('limit', '50');
 
-      const response = await apiService.get(endpoint);
+      const qs = params.toString();
+      const endpoint = `/bookings/user/me${qs ? `?${qs}` : ''}`;
 
-      console.log('trips response ',JSON.stringify(response.data.bookings))
+      const res = await apiService.get(endpoint);
+      // Axios: res.data is the payload
+      const payload = res?.data ?? res;
 
-      if (response.success) {
-        setBookings(response.data.bookings || []);
-        setTotal(response.data.total || 0);
+      // Accept either { success, data: { bookings, total } } or { bookings, total }
+      const ok = payload?.success ?? true;
+      const data = payload?.data ?? payload;
+
+      if (ok && Array.isArray(data?.bookings)) {
+        setBookings(data.bookings);
+        setTotal(Number(data.total ?? data.bookings.length));
       } else {
-        setError(response.error || 'Failed to fetch bookings');
-        setBookings([]);
-        setTotal(0);
+        throw new Error(payload?.error || 'Failed to fetch bookings');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch bookings');
+    } catch (e: any) {
+      setError(e?.message || 'Failed to fetch bookings');
       setBookings([]);
       setTotal(0);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const createBooking = async (bookingData: any) => {
-    try {
-      // Assuming you have a create booking endpoint
-      const response = await apiService.post('/api/v1/bookings', bookingData);
+  const createBooking = useCallback(async (bookingData: any) => {
+    const res = await apiService.post(`${BASE}/bookings`, bookingData);
+    const payload = res?.data ?? res;
+    const ok = payload?.success ?? true;
+    if (!ok) throw new Error(payload?.error || 'Booking failed');
+    await fetchBookings(true);
+    return payload?.data ?? payload;
+  }, [fetchBookings]);
 
-      if (response.success) {
-        // Refresh bookings list
-        await fetchBookings();
-        return response.data;
-      } else {
-        throw new Error(response.error || 'Booking failed');
-      }
-    } catch (err: any) {
-      throw new Error(err.message || 'Booking failed');
-    }
-  };
+  const cancelBooking = useCallback(async (bookingId: string) => {
+    const res = await apiService.patch(`${BASE}/bookings/${bookingId}/cancel`);
+    const payload = res?.data ?? res;
+    const ok = payload?.success ?? true;
+    if (!ok) throw new Error(payload?.error || 'Cancellation failed');
 
-  const cancelBooking = async (bookingId: string) => {
-    try {
-      // Assuming you have a cancel booking endpoint
-      const response = await apiService.patch(`/api/v1/bookings/${bookingId}/cancel`);
-
-      if (response.success) {
-        // Update local state
-        setBookings(prev => 
-          prev.map(booking => 
-            booking.id === bookingId 
-              ? { ...booking, status: 'cancelled' }
-              : booking
-          )
-        );
-        return response.data;
-      } else {
-        throw new Error(response.error || 'Cancellation failed');
-      }
-    } catch (err: any) {
-      throw new Error(err.message || 'Cancellation failed');
-    }
-  };
-
-  const refresh = () => {
-    fetchBookings(true);
-  };
-
-  // Helper methods to get bookings by status
-  const getUpcomingBookings = () => {
-    return bookings.filter(booking => 
-      booking.status === 'confirmed' || booking.status === 'pending'
+    setBookings(prev =>
+      prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } as Booking : b))
     );
-  };
+    return payload?.data ?? payload;
+  }, []);
 
-  const getPastBookings = () => {
-    return bookings.filter(booking => 
-      booking.status === 'completed' || booking.status === 'cancelled'
-    );
-  };
+  const refresh = useCallback(() => fetchBookings(true), [fetchBookings]);
+
+  const getUpcomingBookings = useCallback(
+    () => bookings.filter(b => b.status === 'confirmed' || b.status === 'pending'),
+    [bookings]
+  );
+
+  const getPastBookings = useCallback(
+    () => bookings.filter(b => b.status === 'completed' || b.status === 'cancelled'),
+    [bookings]
+  );
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   return {
     bookings,
@@ -137,6 +111,6 @@ export function useBookings() {
     cancelBooking,
     getUpcomingBookings,
     getPastBookings,
-    fetchBookings, // Expose for manual fetching with filters
+    fetchBookings,
   };
 }

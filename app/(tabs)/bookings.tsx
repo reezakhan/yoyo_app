@@ -1,7 +1,6 @@
 
-import React, { useState, useLayoutEffect, useCallback } from "react"
+import React, { useState, useLayoutEffect, useCallback, useRef } from "react"
 import { View, Text, TouchableOpacity, Image, SafeAreaView, ScrollView, RefreshControl } from "react-native"
-import { Svg, Path } from "react-native-svg"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import { router } from "expo-router"
 import { useBookings } from '@/hooks/useBookings'
@@ -17,16 +16,13 @@ export default function MyTripsApp() {
   const { bookings, loading, error, refresh, getUpcomingBookings, getPastBookings } = useBookings()
 
   // Refresh data when screen comes into focus (when user navigates back)
+  const didMountRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
-
-      console.log('bookings are ',bookings)
-      // Only refresh if data is empty or there's an error
-      if (!bookings || bookings.length === 0 || error) {
-        refresh()
-      }
-    }, [bookings, error, refresh])
-  )
+      if (didMountRef.current) refresh();
+      else didMountRef.current = true;
+    }, [refresh])
+  );
 
   // Get filtered bookings based on active tab
   const getFilteredBookings = () => {
@@ -66,7 +62,7 @@ export default function MyTripsApp() {
     // Remove the 'Z' to treat it as local time instead of UTC
     const localDateString = dateString.replace('Z', '');
     const date = new Date(localDateString);
-    
+
     return date.toLocaleDateString('en-IN', {
       month: 'short',
       day: 'numeric',
@@ -75,10 +71,10 @@ export default function MyTripsApp() {
       hour12: true
     });
   };
-  
+
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString+'Z');
+    const date = new Date(dateString + 'Z');
     return date.toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -139,8 +135,8 @@ export default function MyTripsApp() {
       >
         <View className="relative">
           <Image
-            source={{ 
-              uri: "https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg?auto=compress&cs=tinysrgb&w=800" 
+            source={{
+              uri: booking.room.image || "https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg?auto=compress&cs=tinysrgb&w=800"
             }}
             className="w-full h-48"
             style={{ resizeMode: 'cover' }}
@@ -219,8 +215,8 @@ export default function MyTripsApp() {
               </Text>
               {/* Payment Status */}
               {booking.paymentStatus && (
-                <Text className={`text-xs mt-1 ${booking.paymentStatus === 'pending' ? 'text-orange-600' : 'text-green-600'}`} 
-                      style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
+                <Text className={`text-xs mt-1 ${booking.paymentStatus === 'pending' ? 'text-orange-600' : 'text-green-600'}`}
+                  style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                   Payment: {booking.paymentStatus}
                 </Text>
               )}
@@ -263,7 +259,7 @@ export default function MyTripsApp() {
       </View>
 
       {/* Main Content */}
-      <ScrollView 
+      <ScrollView
         className="flex-1 bg-gray-50 p-4"
         refreshControl={
           <RefreshControl

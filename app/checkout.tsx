@@ -1,14 +1,14 @@
 import React, { useLayoutEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  Image,
-  StatusBar,
-  Alert,
-  TextInput,
+    View,
+    Text,
+    ScrollView,
+    TouchableOpacity,
+    SafeAreaView,
+    Image,
+    StatusBar,
+    Alert,
+    TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useNavigation, useLocalSearchParams } from 'expo-router';
@@ -20,7 +20,7 @@ import Svg, { Path } from 'react-native-svg';
 
 // Define the RoomIcon component directly
 const RoomIcon = () => (
-  <Bed size={16} color="#6B7280" />
+    <Bed size={16} color="#6B7280" />
 );
 
 const CheckoutScreen = () => {
@@ -37,12 +37,12 @@ const CheckoutScreen = () => {
             if (!params.selectedAddons) {
                 return [];
             }
-            
+
             // If it's already an array, return it
             if (Array.isArray(params.selectedAddons)) {
                 return params.selectedAddons;
             }
-            
+
             // If it's a string, try to parse it
             if (typeof params.selectedAddons === 'string') {
                 // Check if it looks like JSON
@@ -55,11 +55,11 @@ const CheckoutScreen = () => {
                     return [];
                 }
             }
-            
+
             return [];
         } catch (error) {
             console.error('Error parsing selectedAddons:', error);
-          
+
             return [];
         }
     };
@@ -79,31 +79,31 @@ const CheckoutScreen = () => {
 
     // Extract booking data from params with safe parsing
     const bookingData = {
-      hotelId: String(params.hotelId || ''),
-      roomId: String(params.roomId || ''),
-      checkIn: String(params.checkIn || ''),
-      checkOut: String(params.checkOut || ''),
-      guests: parseInt(String(params.guests || '2'), 10) || 2,
-      hotelName: String(params.hotelName || ''),
-      roomName: String(params.roomName || ''),
-      totalAmount: parseFloat(String(params.totalAmount || '0')) || 0,
-      address: String(params.address || ''),
-      image: String(params.image || ''),
-      bookingType: String(params.bookingType || 'daily') as 'daily' | 'hourly'
+        hotelId: String(params.hotelId || ''),
+        roomId: String(params.roomId || ''),
+        checkIn: String(params.checkIn || ''),
+        checkOut: String(params.checkOut || ''),
+        guests: parseInt(String(params.guests || '2'), 10) || 2,
+        hotelName: String(params.hotelName || ''),
+        roomName: String(params.roomName || ''),
+        totalAmount: parseFloat(String(params.totalAmount || '0')) || 0,
+        address: String(params.address || ''),
+        image: String(params.image || ''),
+        bookingType: String(params.bookingType || 'daily') as 'daily' | 'hourly'
     };
 
     useLayoutEffect(() => {
         navigation.setOptions({
-          headerShadowVisible: false,
-          headerTitle: () => (
-            <Text className="text-xl text-[#121516]" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Checkout</Text>
-          ),
-          headerTitleAlign: 'center',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="p-2">
-              <X size={24} color="#121516" />
-            </TouchableOpacity>
-          ),
+            headerShadowVisible: false,
+            headerTitle: () => (
+                <Text className="text-xl text-[#121516]" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Checkout</Text>
+            ),
+            headerTitleAlign: 'center',
+            headerLeft: () => (
+                <TouchableOpacity onPress={() => router.back()} className="p-2">
+                    <X size={24} color="#121516" />
+                </TouchableOpacity>
+            ),
         });
     }, [navigation]);
 
@@ -121,7 +121,7 @@ const CheckoutScreen = () => {
             Alert.alert('Error', 'Please enter guest phone number');
             return false;
         }
-        
+
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(guestInfo.email)) {
@@ -141,119 +141,119 @@ const CheckoutScreen = () => {
 
     // Handle booking creation
     const handleConfirmBooking = async () => {
-      try {
-        setLoading(true);
+        try {
+            setLoading(true);
 
-        // Validate required fields
-        if (!bookingData.hotelId || !bookingData.roomId || !bookingData.checkIn || !bookingData.checkOut) {
-          Alert.alert('Error', 'Missing required booking information. Please go back and try again.');
-          setLoading(false);
-          return;
-        }
+            // Validate required fields
+            if (!bookingData.hotelId || !bookingData.roomId || !bookingData.checkIn || !bookingData.checkOut) {
+                Alert.alert('Error', 'Missing required booking information. Please go back and try again.');
+                setLoading(false);
+                return;
+            }
 
-        // Validate guest information
-        if (!validateGuestInfo()) {
+            // Validate guest information
+            if (!validateGuestInfo()) {
+                setLoading(false);
+                return;
+            }
+
+            const bookingRequest = {
+                hotelId: bookingData.hotelId,
+                roomId: bookingData.roomId,
+                checkIn: bookingData.checkIn,
+                checkOut: bookingData.checkOut,
+                guests: bookingData.guests,
+                guestName: guestInfo.name.trim(),
+                guestEmail: guestInfo.email.trim(),
+                guestPhone: guestInfo.phone.trim(),
+                totalAmount: total, // Final calculated amount after all discounts
+                specialRequests: '', // Can be added later if needed,
+                couponCode: appliedCoupon ? appliedCoupon.code : null,
+                selectedAddons: selectedAddons,
+                bookingType: bookingData.bookingType, // Include booking type in request
+            };
+
+
+
+            const response = await apiService.post('/bookings/', bookingRequest);
+
+
+            if (response.success) {
+                Alert.alert(
+                    'Booking Confirmed!',
+                    `Your ${bookingData.bookingType} booking has been successfully created.`,
+                    [
+                        {
+                            text: 'View Booking',
+                            onPress: () => {
+                                router.replace('/(tabs)/bookings');
+                            }
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert('Booking Failed', 'Something went wrong. Please try again.');
+            }
+        } catch (error) {
+            console.error('Booking error:', error);
+            Alert.alert('Booking Failed', 'Something went wrong. Please try again.');
+        } finally {
             setLoading(false);
-            return;
         }
-
-        const bookingRequest = {
-          hotelId: bookingData.hotelId,
-          roomId: bookingData.roomId,
-          checkIn: bookingData.checkIn,
-          checkOut: bookingData.checkOut,
-          guests: bookingData.guests,
-          guestName: guestInfo.name.trim(),
-          guestEmail: guestInfo.email.trim(),
-          guestPhone: guestInfo.phone.trim(),
-          totalAmount: total, // Final calculated amount after all discounts
-          specialRequests: '', // Can be added later if needed,
-          couponCode: appliedCoupon ? appliedCoupon.code : null, 
-          selectedAddons: selectedAddons,
-          bookingType: bookingData.bookingType, // Include booking type in request
-        }; 
-
-      
-
-        const response = await apiService.post('/bookings/', bookingRequest);
- 
-        
-        if (response.success) {
-          Alert.alert(
-            'Booking Confirmed!',
-            `Your ${bookingData.bookingType} booking has been successfully created.`,
-            [
-              {
-                text: 'View Booking',
-                onPress: () => {
-                  router.replace('/(tabs)/bookings');
-                }
-              }
-            ]
-          );
-        } else {
-          Alert.alert('Booking Failed', 'Something went wrong. Please try again.');
-        }
-      } catch (error) {
-        console.error('Booking error:', error);
-        Alert.alert('Booking Failed', 'Something went wrong. Please try again.');
-      } finally {
-        setLoading(false);
-      }
     };
 
     // Helper function to format date
     const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
-      });
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
     };
 
     // Helper function to format date and time for hourly bookings
     const formatDateTime = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
     // Calculate duration and pricing based on booking type
     const calculateBookingMetrics = () => {
-      const checkIn = new Date(bookingData.checkIn);
-      const checkOut = new Date(bookingData.checkOut);
-      
-      if (bookingData.bookingType === 'daily') {
-        const timeDiff = checkOut.getTime() - checkIn.getTime();
-        const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        return {
-          duration: nights,
-          durationLabel: `${nights} ${nights === 1 ? 'night' : 'nights'}`,
-          subtotal: bookingData.totalAmount * nights,
-          addonTotalForBooking: addonTotal * nights
-        };
-      } else {
-        // Hourly booking
-        const timeDiff = checkOut.getTime() - checkIn.getTime();
-        const hours = Math.ceil(timeDiff / (1000 * 3600));
-        return {
-          duration: hours,
-          durationLabel: `${hours} ${hours === 1 ? 'hour' : 'hours'}`,
-          subtotal: bookingData.totalAmount * hours, // For hourly, totalAmount is already calculated
-          addonTotalForBooking: addonTotal // For hourly, don't multiply addons
-        };
-      }
+        const checkIn = new Date(bookingData.checkIn);
+        const checkOut = new Date(bookingData.checkOut);
+
+        if (bookingData.bookingType === 'daily') {
+            const timeDiff = checkOut.getTime() - checkIn.getTime();
+            const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            return {
+                duration: nights,
+                durationLabel: `${nights} ${nights === 1 ? 'night' : 'nights'}`,
+                subtotal: bookingData.totalAmount * nights,
+                addonTotalForBooking: addonTotal * nights
+            };
+        } else {
+            // Hourly booking
+            const timeDiff = checkOut.getTime() - checkIn.getTime();
+            const hours = Math.ceil(timeDiff / (1000 * 3600));
+            return {
+                duration: hours,
+                durationLabel: `${hours} ${hours === 1 ? 'hour' : 'hours'}`,
+                subtotal: bookingData.totalAmount * hours, // For hourly, totalAmount is already calculated
+                addonTotalForBooking: addonTotal // For hourly, don't multiply addons
+            };
+        }
     };
 
     const bookingMetrics = calculateBookingMetrics();
     const { duration, durationLabel, subtotal, addonTotalForBooking } = bookingMetrics;
-    
+
     const taxes = 0; // As requested, keeping taxes as 0
     const total = subtotal + addonTotalForBooking + taxes - discountAmount;
 
@@ -315,9 +315,9 @@ const CheckoutScreen = () => {
                                     <Clock size={16} color="#6B7280" />
                                 </View>
                                 <Text className="text-gray-500 text-sm ml-2" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                                    {bookingData.bookingType === 'daily' 
-                                      ? durationLabel
-                                      : `${durationLabel} booking`
+                                    {bookingData.bookingType === 'daily'
+                                        ? durationLabel
+                                        : `${durationLabel} booking`
                                     }
                                 </Text>
                             </View>
@@ -335,65 +335,65 @@ const CheckoutScreen = () => {
                     {/* Divider */}
                     <View className="h-px bg-gray-100 -mx-6 mb-6" />
 
-                    {/* Guest Information Section */}
+                    /* Guest Information Section with smaller TextInputs */
                     <View className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6">
                         <Text className="text-[#161312] text-lg mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                             Guest Information
                         </Text>
 
-                        {/* Guest Name */}
+                        {/* Guest Name - Smaller */}
                         <View className="mb-4">
                             <Text className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                                 Full Name
                             </Text>
-                            <View className="flex-row items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                <User size={20} color="#6B7280" />
+                            <View className="flex-row items-center bg-gray-50 rounded-lg px-4 py-1 border border-gray-200">
+                                <User size={16} color="#6B7280" />
                                 <TextInput
-                                    className="flex-1 ml-3 text-[#161312] text-base"
+                                    className="flex-1 ml-2 text-[#161312] text-sm"
                                     style={{ fontFamily: 'PlusJakartaSans-Regular' }}
                                     placeholder="Enter full name"
                                     placeholderTextColor="#9CA3AF"
                                     value={guestInfo.name}
-                                    onChangeText={(text) => setGuestInfo({...guestInfo, name: text})}
+                                    onChangeText={(text) => setGuestInfo({ ...guestInfo, name: text })}
                                     autoCapitalize="words"
                                 />
                             </View>
                         </View>
 
-                        {/* Guest Email */}
+                        {/* Guest Email - Smaller */}
                         <View className="mb-4">
                             <Text className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                                 Email Address
                             </Text>
-                            <View className="flex-row items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                <Mail size={20} color="#6B7280" />
+                            <View className="flex-row items-center bg-gray-50 rounded-lg px-4 py-1 border border-gray-200">
+                                <Mail size={16} color="#6B7280" />
                                 <TextInput
-                                    className="flex-1 ml-3 text-[#161312] text-base"
+                                    className="flex-1 ml-2 text-[#161312] text-sm"
                                     style={{ fontFamily: 'PlusJakartaSans-Regular' }}
                                     placeholder="Enter email address"
                                     placeholderTextColor="#9CA3AF"
                                     value={guestInfo.email}
-                                    onChangeText={(text) => setGuestInfo({...guestInfo, email: text})}
+                                    onChangeText={(text) => setGuestInfo({ ...guestInfo, email: text })}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                 />
                             </View>
                         </View>
 
-                        {/* Guest Phone */}
+                        {/* Guest Phone - Smaller */}
                         <View className="mb-0">
                             <Text className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                                 Phone Number
                             </Text>
-                            <View className="flex-row items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                <Phone size={20} color="#6B7280" />
+                            <View className="flex-row items-center bg-gray-50 rounded-lg px-4 py-1 border border-gray-200">
+                                <Phone size={16} color="#6B7280" />
                                 <TextInput
-                                    className="flex-1 ml-3 text-[#161312] text-base"
+                                    className="flex-1 ml-2 text-[#161312] text-sm"
                                     style={{ fontFamily: 'PlusJakartaSans-Regular' }}
                                     placeholder="Enter phone number"
                                     placeholderTextColor="#9CA3AF"
                                     value={guestInfo.phone}
-                                    onChangeText={(text) => setGuestInfo({...guestInfo, phone: text})}
+                                    onChangeText={(text) => setGuestInfo({ ...guestInfo, phone: text })}
                                     keyboardType="phone-pad"
                                 />
                             </View>
@@ -406,7 +406,7 @@ const CheckoutScreen = () => {
                             <Text className="text-[#161312] text-lg mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                                 Selected Add-ons
                             </Text>
-                            
+
                             <View className="gap-3">
                                 {selectedAddons.map((addon: any) => (
                                     <View key={addon.id} className="flex-row items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -444,9 +444,9 @@ const CheckoutScreen = () => {
                                 {bookingData.bookingType === 'daily' ? 'Check-in' : 'Start Time'}
                             </Text>
                             <Text className="text-[#161312] text-lg mt-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                                {bookingData.bookingType === 'daily' 
-                                  ? formatDate(bookingData.checkIn)
-                                  : formatDateTime(bookingData.checkIn)
+                                {bookingData.bookingType === 'daily'
+                                    ? formatDate(bookingData.checkIn)
+                                    : formatDateTime(bookingData.checkIn)
                                 }
                             </Text>
                             <Text className="text-gray-500 text-sm mt-1" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
@@ -458,9 +458,9 @@ const CheckoutScreen = () => {
                                 {bookingData.bookingType === 'daily' ? 'Check-out' : 'End Time'}
                             </Text>
                             <Text className="text-[#161312] text-lg mt-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                                {bookingData.bookingType === 'daily' 
-                                  ? formatDate(bookingData.checkOut)
-                                  : formatDateTime(bookingData.checkOut)
+                                {bookingData.bookingType === 'daily'
+                                    ? formatDate(bookingData.checkOut)
+                                    : formatDateTime(bookingData.checkOut)
                                 }
                             </Text>
                             <Text className="text-gray-500 text-sm mt-1" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
@@ -483,9 +483,9 @@ const CheckoutScreen = () => {
 
                         <View className="flex-row justify-between items-center mb-3">
                             <Text className="text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                                {bookingData.bookingType === 'daily' 
-                                  ? `₹${bookingData.totalAmount.toLocaleString()} x ${durationLabel}`
-                                  : `₹${bookingData.totalAmount.toLocaleString()} x (${durationLabel})`
+                                {bookingData.bookingType === 'daily'
+                                    ? `₹${bookingData.totalAmount.toLocaleString()} x ${durationLabel}`
+                                    : `₹${bookingData.totalAmount.toLocaleString()} x (${durationLabel})`
                                 }
                             </Text>
                             <Text className="text-[#161312]" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
@@ -496,9 +496,9 @@ const CheckoutScreen = () => {
                         {addonTotalForBooking > 0 && (
                             <View className="flex-row justify-between items-center mb-3">
                                 <Text className="text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                                    {bookingData.bookingType === 'daily' 
-                                      ? `Add-ons x ${durationLabel}`
-                                      : 'Add-ons'
+                                    {bookingData.bookingType === 'daily'
+                                        ? `Add-ons x ${durationLabel}`
+                                        : 'Add-ons'
                                     }
                                 </Text>
                                 <Text className="text-[#161312]" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
@@ -533,7 +533,7 @@ const CheckoutScreen = () => {
                                 </Text>
                             </View>
                         ) : (
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 onPress={() => openCouponsSheet()}
                                 className="flex-row justify-between items-center mb-3 p-3 rounded-lg border border-dashed border-gray-300 bg-gray-50"
                             >
@@ -567,9 +567,9 @@ const CheckoutScreen = () => {
                             Cancellation Policy
                         </Text>
                         <Text className="text-gray-600 text-sm leading-relaxed" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                            {bookingData.bookingType === 'daily' 
-                              ? `Cancel before Jul 10, 2024 for a partial refund. After that, this reservation is non-refundable.`
-                              : `Hourly bookings can be cancelled up to 2 hours before the start time for a partial refund.`
+                            {bookingData.bookingType === 'daily'
+                                ? `Cancel before Jul 10, 2024 for a partial refund. After that, this reservation is non-refundable.`
+                                : `Hourly bookings can be cancelled up to 2 hours before the start time for a partial refund.`
                             }{' '}
                             <Text className="text-black underline" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                                 Learn more

@@ -73,7 +73,7 @@ const transformHotel = (backendHotel: BackendHotel): MockHotel => {
     price: backendHotel.pricing?.startingFrom || 0,
     originalPrice: backendHotel.pricing?.range?.max || undefined,
     images: [
-      backendHotel.images?.primary || 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=800'
+      backendHotel.images?.primary || backendHotel.images?.gallery[0] || 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     amenities: backendHotel.amenities || [],
     description: backendHotel.description || '',

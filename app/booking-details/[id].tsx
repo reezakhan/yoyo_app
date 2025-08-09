@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState, useEffect } from 'react';
+import React, { useLayoutEffect, useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Alert,
   Linking,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { SheetManager } from 'react-native-actions-sheet';
@@ -34,6 +35,16 @@ const BookingDetails = () => {
   const [cancelling, setCancelling] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const { refresh: refreshBookings } = useBookings();
+
+  const imageScrollViewRef = useRef<ScrollView>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const imageUrls = useMemo(() => {
+    const arr = Array.isArray(booking?.images) && booking?.images.length > 0
+      ? booking?.images
+      : (booking?.image ? [booking.image] : []);
+    return arr.filter(Boolean);
+  }, [booking]);
 
   useEffect(() => {
     fetchBookingDetails();
@@ -99,7 +110,7 @@ const BookingDetails = () => {
         amount: booking.paymentAmount || booking.totalAmount,
         currency: 'INR'
       });
-      console.log('orderResponse ',orderResponse)
+      console.log('orderResponse ', orderResponse)
       if (orderResponse.success) {
         const { orderId, amount, currency } = orderResponse.data;
 
@@ -576,22 +587,64 @@ const BookingDetails = () => {
       <StatusBar barStyle="dark-content" />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Payment Section - Show at top if payment is pending */}
-
-        {/* Hotel Image and Status */}
+       
         {
-          !booking.refundInfo && <View className="relative">
-            <Image
-              source={{ uri: booking.image }}
-              className="w-full h-64"
-              style={{ resizeMode: 'cover' }}
-            />
-            <View className="absolute inset-0 bg-black/20" />
+          !booking.refundInfo && <View className="w-full h-64 overflow-hidden">
+            <ScrollView
+              ref={imageScrollViewRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              bounces={false}
+              decelerationRate="fast"
+              snapToInterval={Dimensions.get('window').width}
+              snapToAlignment="center"
+              scrollEventThrottle={16}
+              onMomentumScrollEnd={(e) => {
+                const x = e.nativeEvent.contentOffset.x;
+                const w = e.nativeEvent.layoutMeasurement.width;
+                setCurrentImageIndex(Math.round(x / w));
+              }}
+              style={{ height: 256 }}
+            >
+              {imageUrls.map((uri, idx) => (
+                <View key={idx} style={{ width: Dimensions.get('window').width, height: 256 }}>
+                  <Image
+                    source={{ uri }}
+                    className="w-full h-full"
+                    style={{ resizeMode: 'cover' }}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+
+
+
+            {/* same status chip as before */}
             <View className={`absolute top-4 right-4 px-3 py-1 rounded-full border ${getStatusColor(booking.status)}`}>
               <Text className="text-sm capitalize" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
                 {booking.status}
               </Text>
             </View>
+
+            {/* dots */}
+            {imageUrls.length > 1 && (
+              <View className="absolute bottom-5 left-0 right-0 flex-row justify-center gap-2">
+                {imageUrls.map((_, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => {
+                      setCurrentImageIndex(index);
+                      imageScrollViewRef.current?.scrollTo({
+                        x: index * Dimensions.get('window').width,
+                        animated: true
+                      });
+                    }}
+                    className={`h-2 rounded-full ${index === currentImageIndex ? 'w-8 bg-white' : 'w-2 bg-white/50'}`}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         }
 
@@ -696,11 +749,11 @@ const BookingDetails = () => {
               </Text>
             </View>
 
-            <View className="items-center">
+            {/* <View className="items-center">
               <Text className="text-lg text-gray-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                 {booking.nights}N
               </Text>
-            </View>
+            </View> */}
 
             <View>
               <Text className="text-lg text-gray-900 mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>

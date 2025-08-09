@@ -59,35 +59,6 @@ interface SearchFilters {
   sortBy?: string;
 }
 
-const cityData = [
-  {
-    id: 'nearby',
-    name: 'Nearby',
-    image: 'https://images.pexels.com/photos/2034335/pexels-photo-2034335.jpeg?auto=compress&cs=tinysrgb&w=200',
-    icon: '📍'
-  },
-  {
-    id: 'bangalore',
-    name: 'Bangalore',
-    image: 'https://images.pexels.com/photos/789750/pexels-photo-789750.jpeg?auto=compress&cs=tinysrgb&w=200'
-  },
-  {
-    id: 'chennai',
-    name: 'Chennai',
-    image: 'https://images.pexels.com/photos/2034335/pexels-photo-2034335.jpeg?auto=compress&cs=tinysrgb&w=200'
-  },
-  {
-    id: 'delhi',
-    name: 'Delhi',
-    image: 'https://images.pexels.com/photos/1098460/pexels-photo-1098460.jpeg?auto=compress&cs=tinysrgb&w=200'
-  },
-  {
-    id: 'mumbai',
-    name: 'Mumbai',
-    image: 'https://images.pexels.com/photos/1007426/pexels-photo-1007426.jpeg?auto=compress&cs=tinysrgb&w=200'
-  }
-];
-
 export default function HotelBookingApp() {
   const [location, setLocation] = useState<LocationState>({
     coordinates: null,

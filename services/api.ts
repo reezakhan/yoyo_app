@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockHotels, mockBookings, mockWishlistItems, getHotelById, getBookingById, searchHotels, filterHotels } from './mockData';
 
-const BASE_URL = 'http://192.168.1.4:3000/api/v1';
+const BASE_URL = 'http://192.168.1.3:3000/api/v1';
 
 export interface ApiResponse<T = any> {
   success: boolean;
