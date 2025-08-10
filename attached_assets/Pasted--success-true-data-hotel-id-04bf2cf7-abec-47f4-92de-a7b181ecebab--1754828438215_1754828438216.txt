@@ -1,0 +1,187 @@
+{
+  "success": true,
+  "data": {
+    "hotel": {
+      "id": "04bf2cf7-abec-47f4-92de-a7b181ecebab",
+      "name": "Grand Palace Hotel",
+      "description": "Luxury hotel in the heart of the city with premium amenities",
+      "address": "123 Main Street, Downtown",
+      "city": "New York",
+      "state": "NY",
+      "country": "United States",
+      "zipCode": "10001",
+      "starRating": "5",
+      "amenities": [
+        "WiFi",
+        "Pool",
+        "Gym",
+        "Restaurant",
+        "Room Service",
+        "Parking",
+        "Spa"
+      ],
+      "ownerId": "owner-123",
+      "paymentMode": "both",
+      "onlinePaymentEnabled": true,
+      "offlinePaymentEnabled": true,
+      "cancellationPeriodHours": 24,
+      "mapCoordinates": "40.7128,-74.0060",
+      "images": [
+        {
+          "id": "img-1",
+          "url": "https://example.com/hotel-lobby.jpg",
+          "isPrimary": true
+        },
+        {
+          "id": "img-2", 
+          "url": "https://example.com/hotel-exterior.jpg",
+          "isPrimary": false
+        }
+      ],
+      "rating": 4.3,
+      "reviewCount": 156,
+      "price": 250.00,
+      "availableRooms": 8,
+      "reviewsData": {
+        "overallRating": 4.3,
+        "totalReviews": 156,
+        "ratingBreakdown": {
+          "5": 68,
+          "4": 45,
+          "3": 28,
+          "2": 10,
+          "1": 5
+        },
+        "reviews": [
+          {
+            "id": "review-1",
+            "user": "John Smith",
+            "comment": "Excellent service and beautiful rooms. Highly recommended!",
+            "rating": 5,
+            "date": "2024-01-15"
+          },
+          {
+            "id": "review-2",
+            "user": "Sarah Johnson",
+            "comment": "Great location and friendly staff. The breakfast was amazing.",
+            "rating": 4,
+            "date": "2024-01-12"
+          },
+          {
+            "id": "review-3",
+            "user": "Mike Wilson",
+            "comment": "Clean rooms and good amenities. Value for money.",
+            "rating": 4,
+            "date": "2024-01-10"
+          }
+        ]
+      },
+      "roomUpgradeData": [
+        {
+          "id": "room-123",
+          "hotelId": "04bf2cf7-abec-47f4-92de-a7b181ecebab",
+          "roomNumber": "101",
+          "name": "Standard Room",
+          "description": "Comfortable room with city view",
+          "capacity": 2,
+          "maxGuests": 2,
+          "bedType": "Queen",
+          "size": 25,
+          "floor": 1,
+          "pricePerNight": 250.00,
+          "pricePerHour": 35.00,
+          "type": "standard",
+          "roomTypeId": "type-1",
+          "roomType": {
+            "id": "type-1",
+            "name": "Standard"
+          },
+          "isHourlyBooking": true,
+          "isDailyBooking": true,
+          "amenities": ["WiFi", "TV", "AC", "Mini Fridge"],
+          "status": "available",
+          "images": [
+            {
+              "id": "room-img-1",
+              "url": "https://example.com/standard-room.jpg",
+              "isPrimary": true
+            }
+          ],
+          "addons": [
+            {
+              "id": "addon-1",
+              "name": "Breakfast",
+              "description": "Continental breakfast for 2",
+              "image": "https://example.com/breakfast.jpg",
+              "price": 25.00,
+              "status": "active"
+            },
+            {
+              "id": "addon-2",
+              "name": "Airport Transfer",
+              "description": "One-way airport pickup",
+              "image": "https://example.com/transfer.jpg",
+              "price": 30.00,
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "id": "room-456",
+          "hotelId": "04bf2cf7-abec-47f4-92de-a7b181ecebab",
+          "roomNumber": "201",
+          "name": "Deluxe Suite",
+          "description": "Spacious suite with balcony and premium amenities",
+          "capacity": 4,
+          "maxGuests": 4,
+          "bedType": "King",
+          "size": 45,
+          "floor": 2,
+          "pricePerNight": 450.00,
+          "pricePerHour": 65.00,
+          "type": "suite",
+          "roomTypeId": "type-2",
+          "roomType": {
+            "id": "type-2",
+            "name": "Suite"
+          },
+          "isHourlyBooking": true,
+          "isDailyBooking": true,
+          "amenities": ["WiFi", "TV", "AC", "Mini Bar", "Balcony", "Premium Toiletries"],
+          "status": "available",
+          "images": [
+            {
+              "id": "room-img-2",
+              "url": "https://example.com/deluxe-suite.jpg",
+              "isPrimary": true
+            }
+          ],
+          "addons": [
+            {
+              "id": "addon-1",
+              "name": "Breakfast",
+              "description": "Continental breakfast for 2",
+              "image": "https://example.com/breakfast.jpg",
+              "price": 25.00,
+              "status": "active"
+            },
+            {
+              "id": "addon-3",
+              "name": "Spa Package",
+              "description": "2-hour spa session",
+              "image": "https://example.com/spa.jpg",
+              "price": 120.00,
+              "status": "active"
+            }
+          ]
+        }
+      ],
+      "searchCriteria": {
+        "guests": 2,
+        "checkIn": "2024-02-01T15:00:00Z",
+        "checkOut": "2024-02-03T11:00:00Z",
+        "bookingType": "daily"
+      }
+    }
+  }
+}

@@ -1153,6 +1153,50 @@ const BookingDetails = () => {
           </View>
         </View>
 
+        {/* Review Data Section - Show if review exists */}
+        {booking.reviewData && (
+          <View className="px-6 py-6 border-t border-gray-100">
+            <Text className="text-lg text-gray-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              Your Review
+            </Text>
+            <View className="bg-gray-50 rounded-lg p-4">
+              <View className="flex-row items-center justify-between mb-3">
+                <View className="flex-row items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={20}
+                      color={star <= booking.reviewData.rating ? '#FCD34D' : '#D1D5DB'}
+                      fill={star <= booking.reviewData.rating ? '#FCD34D' : '#D1D5DB'}
+                    />
+                  ))}
+                  <Text className="text-base text-gray-900 ml-2" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                    {booking.reviewData.rating}/5
+                  </Text>
+                </View>
+                <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                  {new Date(booking.reviewData.createdAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </Text>
+              </View>
+              <Text className="text-base text-gray-700" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                "{booking.reviewData.comment}"
+              </Text>
+              {booking.reviewData.isVerified && (
+                <View className="flex-row items-center mt-3">
+                  <CheckCircle size={16} color="#10B981" />
+                  <Text className="text-sm text-green-600 ml-1" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
+                    Verified Review
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Amenities - Hide when refund info exists */}
         {!booking.refundInfo && (
           <View className="px-6 py-6 border-t border-gray-100">
@@ -1218,16 +1262,16 @@ const BookingDetails = () => {
         <View className=" px-6 py-4">
           <View className="bg-white rounded-xl p-4">
             <View className="flex-row gap-3">
-              {/* Show review button for completed bookings */}
-              {booking.status === 'completed' ? (
+              {/* Show review button for completed bookings only if no review exists */}
+              {booking.status === 'completed' && !booking.reviewData ? (
                 <TouchableOpacity
                   className="flex-1 py-2 px-4 rounded-lg bg-black"
                   onPress={() => SheetManager.show('review-sheet', {
                     payload: {
                       booking: booking,
                       onReviewSubmitted: () => {
-                        // Optional: refresh booking details or show success message
-                        console.log('Review submitted successfully');
+                        // Refresh booking details to get updated review data
+                        fetchBookingDetails();
                       }
                     }
                   })}
@@ -1236,9 +1280,19 @@ const BookingDetails = () => {
                     Review your stay
                   </Text>
                 </TouchableOpacity>
+              ) : booking.status === 'completed' && booking.reviewData ? (
+                // Show review already submitted message
+                <View className="flex-1 py-2 px-4 rounded-lg bg-green-100 border border-green-300">
+                  <Text className="text-center text-green-800 text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                    Review Submitted
+                  </Text>
+                  <Text className="text-center text-green-600 text-sm" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                    Thank you for your feedback!
+                  </Text>
+                </View>
               ) : (
                 <>
-                  {/* Pay at Hotel Button - Always show */}
+                  {/* Pay at Hotel Button - Only show for non-completed bookings */}
                   {booking.paymentStaus === 'pending' && <TouchableOpacity className="flex-1 py-2 px-4 rounded-lg border border-gray-300 bg-gray-50">
                     <Text className="text-center text-black text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                       Pay at hotel
@@ -1259,7 +1313,7 @@ const BookingDetails = () => {
                     </TouchableOpacity>
                   }
 
-                  {/* Pay Now Button - Only show if onlinePaymentEnabled is true */}
+                  {/* Pay Now Button - Only show if onlinePaymentEnabled is true and not completed */}
                   {booking.onlinePaymentEnabled && booking.paymentStaus === 'pending' && (
                     <TouchableOpacity
                       className="flex-1 py-2 px-4 rounded-lg bg-black relative"

@@ -71,6 +71,7 @@ const sortOptions = [
 interface ReviewsActionSheetProps {
   sheetId: string;
   reviewsData?: ReviewsData;
+  props: any; // Assuming props is passed and has sheetRef
 }
 
 export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: ReviewsActionSheetProps) {
@@ -99,8 +100,8 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
     <View className="flex-row items-center gap-3">
       <Text className="text-sm text-gray-700 w-2" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>{rating}</Text>
       <View className="flex-1 h-2 rounded-full bg-gray-200">
-        <View 
-          className="h-full rounded-full bg-black" 
+        <View
+          className="h-full rounded-full bg-black"
           style={{ width: `${percentage}%` }}
         />
       </View>
@@ -108,8 +109,8 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
     </View>
   );
 
-  const renderReviewItem = (review: Review) => (
-    <View key={review.id} className="bg-white rounded-lg p-4 mb-4">
+  const renderReviewItem = (review: any) => ( // Changed to 'any' to accommodate new structure
+    <View key={review.id || review.reviewId} className="bg-white rounded-lg p-4 mb-4">
       <View className="flex-row items-center gap-3 mb-3">
         <Image
           source={{ uri: review.userImage }}
@@ -120,15 +121,15 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
           <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>{review.timeAgo}</Text>
         </View>
       </View>
-      
+
       <View className="flex-row items-center gap-1 mb-3">
         {renderStars(review.rating, 20)}
       </View>
-      
+
       <Text className="text-base leading-relaxed text-gray-700 mb-4" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
         {review.content}
       </Text>
-      
+
       <View className="flex-row items-center gap-6">
         <TouchableOpacity className="flex-row items-center gap-2">
           <ThumbsUp size={20} color="#6B7280" />
@@ -142,8 +143,12 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
     </View>
   );
 
+  // Extract hotelReviewsData from reviewsData if available
+  const hotelReviewsData = reviewsData?.data?.booking?.reviewData;
+  const reviews = reviewsData?.reviews || reviewsData?.data?.booking?.reviews || []; // Fallback for different structures
+
   return (
-    <ActionSheet 
+    <ActionSheet
       id={sheetId}
       containerStyle={{
         paddingHorizontal: 0,
@@ -160,37 +165,50 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
         </View>
 
         {/* Header */}
-        <View className="flex-row items-center justify-between px-6 py-4">
-          <Text className="text-2xl text-gray-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Reviews</Text>
-          <TouchableOpacity onPress={handleClose} className="p-2">
-            <X size={24} color="#6B7280" />
+        <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-100">
+          <TouchableOpacity onPress={handleClose} className="p-2 -ml-2">
+            <X size={24} color="#374151" />
           </TouchableOpacity>
+          <View className="flex-1 items-center">
+            <Text className="text-lg text-gray-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              Reviews
+            </Text>
+            {hotelReviewsData && (
+              <Text className="text-sm text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                {hotelReviewsData.rating} • {reviews.length} reviews
+              </Text>
+            )}
+          </View>
+          <View className="w-10" />
         </View>
 
-        {/* Rating Summary */}
-        <View className="px-6 pb-6">
-          <View className="flex-row items-start justify-between gap-6">
-            <View className="flex-col items-start gap-1">
-              <Text className="text-5xl text-gray-900" style={{ fontFamily: 'PlusJakartaSans-ExtraBold' }}>{reviewsData.overallRating}</Text>
-              <View className="flex-row items-center gap-1 mb-1">
-                {renderStars(Math.floor(reviewsData.overallRating))}
+        {/* Rating Summary - This part needs to be adjusted if hotelReviewsData structure differs */}
+        {hotelReviewsData && (
+          <View className="px-6 pb-6">
+            <View className="flex-row items-start justify-between gap-6">
+              <View className="flex-col items-start gap-1">
+                <Text className="text-5xl text-gray-900" style={{ fontFamily: 'PlusJakartaSans-ExtraBold' }}>{hotelReviewsData.rating}</Text>
+                <View className="flex-row items-center gap-1 mb-1">
+                  {renderStars(Math.floor(hotelReviewsData.rating))}
+                </View>
+                <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>{reviews.length} reviews</Text>
               </View>
-              <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>{reviewsData.totalReviews} reviews</Text>
-            </View>
-            
-            <View className="flex-1 min-w-[200px] gap-2">
-              {[5, 4, 3, 2, 1].map((rating) => 
-                renderRatingBar(rating, reviewsData.ratingBreakdown[rating as keyof typeof reviewsData.ratingBreakdown])
-              )}
+
+              <View className="flex-1 min-w-[200px] gap-2">
+                {/* Rating breakdown might not be directly available in reviewData, adjust if needed */}
+                {[5, 4, 3, 2, 1].map((rating) =>
+                  renderRatingBar(rating, hotelReviewsData.ratingBreakdown?.[rating as keyof typeof hotelReviewsData.ratingBreakdown] || 0)
+                )}
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Sort Options */}
         <View className="px-6 pt-4 border-t border-gray-100">
           <Text className="text-base text-gray-800 mb-3" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>Sort by</Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             className="mb-4"
           >
@@ -200,14 +218,14 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
                   key={option.id}
                   onPress={() => setSelectedSort(option.id)}
                   className={`flex h-9 items-center justify-center rounded-full px-4 ${
-                    selectedSort === option.id 
-                      ? 'bg-black' 
+                    selectedSort === option.id
+                      ? 'bg-black'
                       : 'bg-gray-100'
                   }`}
                 >
                   <Text className={`text-sm ${
-                    selectedSort === option.id 
-                      ? 'text-white' 
+                    selectedSort === option.id
+                      ? 'text-white'
                       : 'text-gray-700'
                   }`} style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                     {option.label}
@@ -219,17 +237,53 @@ export function ReviewsActionSheet({ sheetId, reviewsData = mockReviewsData }: R
         </View>
 
         {/* Reviews List */}
-        <ScrollView 
+        <ScrollView
           className="bg-gray-50 px-6 py-6"
           showsVerticalScrollIndicator={false}
           style={{ maxHeight: 400 }}
         >
-          {reviewsData.reviews.map(renderReviewItem)}
+          {reviews.map((review, index) => (
+            <View key={review.id || index} className="bg-white rounded-lg p-4 mb-4">
+              <View className="flex-row items-center gap-3 mb-3">
+                <Image
+                  source={{ uri: review.userImage || 'https://via.placeholder.com/40' }} // Fallback image
+                  className="w-10 h-10 rounded-full"
+                />
+                <View className="flex-1">
+                  <Text className="text-base text-gray-900" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                    {review.userName || review.userName}
+                  </Text>
+                  <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                    {review.timeAgo || 'Just now'}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center gap-1 mb-3">
+                {renderStars(review.rating || 0, 20)}
+              </View>
+
+              <Text className="text-base leading-relaxed text-gray-700 mb-4" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                {review.comment || 'No comment provided.'}
+              </Text>
+
+              <View className="flex-row items-center gap-6">
+                <TouchableOpacity className="flex-row items-center gap-2">
+                  <ThumbsUp size={20} color="#6B7280" />
+                  <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>{review.likes || 0}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity className="flex-row items-center gap-2">
+                  <ThumbsDown size={20} color="#6B7280" />
+                  <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>{review.dislikes || 0}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
         </ScrollView>
 
         {/* Close Button */}
         <View className="border-t border-gray-200 bg-white px-6 py-4">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleClose}
             className="flex h-12 w-full items-center justify-center rounded-full bg-black"
           >
