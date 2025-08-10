@@ -59,6 +59,12 @@ const ProfileScreen = () => {
     </Svg>
   );
 
+  const WalletIcon = ({ size = 20, color = "#374151" }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Path d="M21,18V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5V6H12C10.89,6 10,6.9 10,8V16A2,2 0 0,0 12,18M12,16H22V8H12M16,13.5A1.5,1.5 0 0,1 14.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,12A1.5,1.5 0 0,1 16,13.5Z" />
+    </Svg>
+  );
+
   const ChevronRightIcon = ({ size = 20, color = "#9CA3AF" }) => (
     <Svg width={size} height={size} viewBox="0 0 256 256" fill={color}>
       <Path d="M181.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L166.69,128,98.34,59.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,181.66,133.66Z" />
@@ -74,13 +80,16 @@ const ProfileScreen = () => {
             router.push('/personal-info')
           }
         },
-        // { icon: CreditCardIcon, label: 'Payment methods', onPress: () => {} },
+        {
+          icon: WalletIcon, label: 'Wallet', onPress: () => {
+            router.push('/wallet')
+          }
+        },
         {
           icon: BellIcon, label: 'Notifications', onPress: () => {
             router.push('/notifications')
           }
         },
-        // { icon: SettingsIcon, label: 'Settings', onPress: () => { } },
       ]
     },
     {
@@ -143,18 +152,31 @@ const ProfileScreen = () => {
       >
         <View className="px-4 py-6">
           {/* Profile Section */}
-          <View className="flex-row items-center gap-4 mb-8 hidden">
-            <View className="relative">
-              <Image
-                source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEge7MQC0MLY28227eQEwx3A3dYhxnRrlXYFJZzZVy9K09XXZ1fu1Gw_Y6Y76uySWhIHGTa1BHnwUJd2hTvwqH5sL5bR-AXweZz8IdGWdYNV6KHcCRf0ShYDYi0fYZguUtd7bV8KuR7XOs9eNV9k0jq_FQYezxz-SNIRi2Z-cQKFNqajKaCOoBYI64w1LK4Vnm1B0AufLtX_Ngd-10fnErG_fs-1hRW7xp2l5Wl-YcUcCIuQGlw1ueeQpNUaR3Z6J9zEbRoj6ySg' }}
-                className="w-20 h-20 rounded-full"
-                style={{ aspectRatio: 1 }}
-              />
+          <View className="flex-row items-center justify-between mb-8">
+            <View className="flex-row items-center gap-4">
+              <View className="relative">
+                <Image
+                  source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEge7MQC0MLY28227eQEwx3A3dYhxnRrlXYFJZzZVy9K09XXZ1fu1Gw_Y6Y76uySWhIHGTa1BHnwUJd2hTvwqH5sL5bR-AXweZz8IdGWdYNV6KHcCRf0ShYDYi0fYZguUtd7bV8KuR7XOs9eNV9k0jq_FQYezxz-SNIRi2Z-cQKFNqajKaCOoBYI64w1LK4Vnm1B0AufLtX_Ngd-10fnErG_fs-1hRW7xp2l5Wl-YcUcCIuQGlw1ueeQpNUaR3Z6J9zEbRoj6ySg' }}
+                  className="w-20 h-20 rounded-full"
+                  style={{ aspectRatio: 1 }}
+                />
+              </View>
+              <View className="flex-col">
+                <Text className="text-black text-2xl" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Sophia Carter</Text>
+                <Text className="text-gray-500 text-sm" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>Guest</Text>
+              </View>
             </View>
-            <View className="flex-col ">
-              <Text className="text-black  text-2xl" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Sophia Carter</Text>
-              <Text className="text-gray-500  text-sm" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>Guest</Text>
-            </View>
+            
+            {/* Wallet Icon and Amount */}
+            <TouchableOpacity 
+              className="flex-row items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg"
+              onPress={() => router.push('/wallet')}
+            >
+              <WalletIcon size={20} color="#374151" />
+              <Text className="text-black text-sm" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                ₹1,500
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Menu Sections */}
