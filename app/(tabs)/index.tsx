@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect, useEffect, useRef } from "react"
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Pressable, Image, RefreshControl, Alert, Animated, Modal, TouchableWithoutFeedback } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Pressable, Image, RefreshControl, Alert, Animated, Modal, TouchableWithoutFeedback, TextInput } from "react-native"
 import { Svg, Path, Line, Circle } from "react-native-svg"
 import { useNavigation } from "@react-navigation/native"
 import { router } from "expo-router"
@@ -16,28 +16,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { TimeRangePicker } from '@/components/ui/TimeRangePicker'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
-// SVG Icons as components
-const MagnifyingGlassIcon = ({ size = 24, color = "currentColor" }) => (
-  <Svg width={size} height={size} viewBox="0 0 256 256" fill={color}>
-    <Path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
-  </Svg>
-)
-
-const LocationIcon = ({ size = 20, color = "currentColor" }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <Path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-    <Circle cx="12" cy="10" r="3" />
-  </Svg>
-)
 
 // Quick filter data structure (example)
 const quickFilters = [
@@ -90,8 +68,7 @@ export default function HotelBookingApp() {
   const [filters, setFilters] = useState<SearchFilters>({
     sortBy: 'recommended'
   });
-  const [filtersApplied, setFiltersApplied] = useState(false);
-  const [stickyHeaderVisible, setStickyHeaderVisible] = useState(false);
+
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
 
@@ -101,11 +78,10 @@ export default function HotelBookingApp() {
   const headerHeight = useRef(0); // To store the height of the header
 
   const { addToWishlist, removeFromWishlistByHotelId, isInWishlist, forceRefresh } = useWishlist()
-  const { getUpcomingBookings, getCompletedBookings } = useBookings()
+  const { getUpcomingBookings } = useBookings()
 
   // Get upcoming and completed bookings
   const upcomingBookings = getUpcomingBookings()
-  const completedBookings = getCompletedBookings()
   const nextBooking = upcomingBookings.length > 0 ? upcomingBookings[0] : null
 
   // State for Review Modal
@@ -145,13 +121,13 @@ export default function HotelBookingApp() {
         break;
     }
     setFilters(newFilters);
-    setFiltersApplied(getActiveFiltersCount() > 0);
+   
   };
 
   const handleFilterChange = (newFilters: SearchFilters) => {
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
-    setFiltersApplied(getActiveFiltersCount() > 0);
+ 
   };
 
   // Wishlist handlers
@@ -308,28 +284,13 @@ export default function HotelBookingApp() {
         // Adjust the threshold based on the header's height if it's dynamic,
         // or use a fixed value if the header height is known and constant.
         // For now, assuming header is around 100px.
-        setStickyHeaderVisible(currentY > 100); // Adjust this threshold as needed
+        
         setIsFilterSticky(currentY > filterSectionY.current - headerHeight.current);
       }
     }
   );
 
 
-  // Handle review submission
-  const handleSubmitReview = () => {
-    if (!currentBookingForReview) return;
-
-    // In a real app, you would send this data to an API
-    console.log('Submitting review for:', currentBookingForReview.hotelName);
-    console.log('Rating:', overallRating);
-    console.log('Comment:', comment);
-
-    Alert.alert('Review Submitted', 'Thank you for your feedback!');
-    setReviewModalVisible(false);
-    setComment('');
-    setOverallRating(0);
-    setCurrentBookingForReview(null);
-  };
 
   // Function to open the review modal
   const openReviewModal = (booking: Booking) => {
@@ -888,17 +849,7 @@ export default function HotelBookingApp() {
         {/* Next Trip */}
         {renderNextTrip()}
 
-        {/* Bookings Section */}
-        {completedBookings.length > 0 && (
-          <View className="px-4 mb-6">
-            <Text className="text-lg text-gray-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-              Your Bookings
-            </Text>
-            <View>
-              {completedBookings.map(renderBookingCard)}
-            </View>
-          </View>
-        )}
+       
 
 
         {/* Quick picks for you Section */}
@@ -994,68 +945,7 @@ export default function HotelBookingApp() {
         showButton={false}
       />
 
-      {/* Review Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={reviewModalVisible}
-        onRequestClose={closeReviewModal}
-      >
-        <TouchableWithoutFeedback onPress={closeReviewModal}>
-          <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View className="bg-white p-6 rounded-2xl w-11/12 max-w-sm">
-                <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-xl font-bold" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Review Your Stay</Text>
-                  <TouchableOpacity onPress={closeReviewModal}>
-                    <X size={24} color="#6B7280" />
-                  </TouchableOpacity>
-                </View>
-                <View className="mb-4">
-                  <Text className="text-base font-semibold mb-2" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>Overall Rating</Text>
-                  <View className="flex-row">
-                    {[1, 2, 3, 4, 5].map((starValue) => (
-                      <TouchableOpacity
-                        key={starValue}
-                        onPress={() => setOverallRating(starValue)}
-                        className="mr-2"
-                      >
-                        <Star size={24} color={starValue <= overallRating ? "#FFC107" : "#D1D5DB"} fill={starValue <= overallRating ? "#FFC107" : "none"} />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-                <View className="mb-6">
-                  <Text className="text-base font-semibold mb-2" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>Your Comment</Text>
-                  <View className="border border-gray-300 rounded-lg p-3 h-24">
-                    <Text className="text-base" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                      {comment}
-                    </Text>
-                    {/* This is a placeholder for a TextInput. In a real app, use TextInput from react-native */}
-                    <TextInput
-                      className="text-base absolute top-0 left-0 right-0 bottom-0 p-3" // Placeholder for TextInput styling
-                      style={{ fontFamily: 'PlusJakartaSans-Regular' }}
-                      value={comment}
-                      onChangeText={setComment}
-                      multiline
-                      placeholder="Share your experience..."
-                    />
-                  </View>
-                </View>
-                <TouchableOpacity
-                  className="bg-black py-3 rounded-lg items-center"
-                  onPress={handleSubmitReview}
-                  disabled={overallRating === 0}
-                >
-                  <Text className="text-white text-base" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                    Submit Review
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      
     </View>
   )
 }

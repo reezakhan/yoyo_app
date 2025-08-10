@@ -11,10 +11,11 @@ import {
   Linking,
   Platform,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { SheetManager } from 'react-native-actions-sheet';
-import { Calendar, MapPin, Users, Phone, Mail, MessageCircle, Download, X, Plus, CreditCard, Clock, User, Copy, CheckCircle, RefreshCw } from 'lucide-react-native';
+import { Calendar, MapPin, Users, Phone, Mail, MessageCircle, Download, X, Plus, CreditCard, Clock, User, Copy, CheckCircle, RefreshCw, Star } from 'lucide-react-native';
 import { apiService } from '@/services/api';
 import { MockBooking } from '@/services/mockData';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
