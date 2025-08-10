@@ -53,7 +53,7 @@ const HotelDetails = () => {
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const { addToWishlist, removeFromWishlistByHotelId, isInWishlist } = useWishlist();
 
-  
+
 
   // Wishlist handlers
   const handleWishlistToggle = async () => {
@@ -871,73 +871,108 @@ const HotelDetails = () => {
         )}
 
         {/* Reviews */}
-        <View className="border-b border-stone-200 p-5 hidden">
-          <Text className="text-lg text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>Reviews</Text>
+        <View className="px-5 py-6 border-t border-stone-200">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-xl text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              Reviews
+            </Text>
+            <TouchableOpacity
+              onPress={() => SheetManager.show('reviews-action-sheet', {
+                payload: {
+                  hotelId: hotel.id,
+                  reviews: hotel.reviewsData?.reviews || []
+                }
+              })}
+              className="flex-row items-center"
+            >
+              <Text className="text-base text-blue-600 mr-2" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
+                See all
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color="#2563eb" />
+            </TouchableOpacity>
+          </View>
 
-          {reviewCount > 0 ? (
-            <>
-              <View className="mt-4 flex-row items-center gap-8">
-                <View className="items-center gap-1">
-                  <Text className="text-5xl text-stone-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                    {currentRating.toFixed(1)}
+          {/* Rating Summary */}
+          {hotel.reviewsData && (
+            <View className="bg-gray-50 rounded-lg p-4 mb-4">
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center">
+                  <Text className="text-2xl text-gray-900 mr-2" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                    {hotel.reviewsData.overallRating}
                   </Text>
-                  <View className="flex-row gap-0.5">
-                    {Array.from({ length: 5 }).map((_, index) => (
+                  <View className="flex-row">
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <Ionicons
-                        key={index}
-                        name={index < Math.floor(currentRating) ? "star" : "star-outline"}
-                        size={16}
-                        color={index < Math.floor(currentRating) ? "#facc15" : "#d6d3d1"}
+                        key={star}
+                        name="star"
+                        size={20}
+                        color={star <= Math.floor(hotel.reviewsData.overallRating) ? "#f59e0b" : "#d1d5db"}
                       />
                     ))}
                   </View>
-                  <Text className="text-sm text-stone-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                    {reviewCount} reviews
-                  </Text>
                 </View>
-
-                <View className="flex-1">
-                  {[5, 4, 3, 2, 1].map((rating) => {
-                    const count = ratingBreakdown[rating] || 0;
-                    const percentage = reviewCount > 0 ? Math.round((count / reviewCount) * 100) : 0;
-
-                    return (
-                      <View key={rating} className="flex-row items-center gap-3 mb-2">
-                        <Text className="text-sm text-stone-700 w-2" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                          {rating}
-                        </Text>
-                        <View className="flex-1 h-1.5 bg-stone-200 rounded-full">
-                          <View
-                            className="h-1.5 bg-yellow-400 rounded-full"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </View>
-                        <Text className="text-sm text-stone-500 w-8" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                          {percentage}%
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
+                <Text className="text-sm text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
+                  {hotel.reviewsData.totalReviews} reviews
+                </Text>
               </View>
 
-              <TouchableOpacity onPress={() => SheetManager.show('reviews')} className="mt-5 flex-row items-center justify-between">
-                <Text className="text-base text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
-                  View All Reviews
-                </Text>
-                <Ionicons name="chevron-forward" size={20} color="#dc2626" />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View className="mt-4 py-8 items-center">
-              <Ionicons name="star-outline" size={48} color="#d6d3d1" />
-              <Text className="mt-2 text-stone-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                No reviews yet
-              </Text>
-              <Text className="text-sm text-stone-400" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                Be the first to review this hotel
-              </Text>
+              {/* Rating Breakdown */}
+              <View className="space-y-1">
+                {Object.entries(hotel.reviewsData.ratingBreakdown)
+                  .sort(([a], [b]) => Number(b) - Number(a))
+                  .map(([rating, count]) => (
+                    <View key={rating} className="flex-row items-center">
+                      <Text className="text-xs text-gray-600 w-4" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                        {rating}
+                      </Text>
+                      <Ionicons name="star" size={12} color="#f59e0b" style={{ marginHorizontal: 4 }} />
+                      <View className="flex-1 bg-gray-200 rounded-full h-2 mx-2">
+                        <View
+                          className="bg-yellow-400 h-2 rounded-full"
+                          style={{ width: `${(Number(count) / hotel.reviewsData.totalReviews) * 100}%` }}
+                        />
+                      </View>
+                      <Text className="text-xs text-gray-600 w-8" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                        {count}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
             </View>
+          )}
+
+          {hotel.reviewsData?.reviews && hotel.reviewsData.reviews.length > 0 ? (
+            <View className="space-y-4">
+              {hotel.reviewsData.reviews.slice(0, 3).map((review, index) => (
+                <View key={review.id || index} className="pb-4 border-b border-stone-100 last:border-b-0">
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Text className="text-base text-stone-900" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                      {review.user}
+                    </Text>
+                    <View className="flex-row items-center">
+                      <Ionicons name="star" size={16} color="#f59e0b" />
+                      <Text className="text-sm text-stone-600 ml-1" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
+                        {review.rating}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className="text-sm text-stone-600 mb-1" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                    {review.comment}
+                  </Text>
+                  <Text className="text-xs text-stone-400" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                    {new Date(review.date).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text className="text-stone-500 text-center py-8" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+              No reviews yet
+            </Text>
           )}
         </View>
       </ScrollView>
