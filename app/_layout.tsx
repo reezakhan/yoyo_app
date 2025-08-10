@@ -70,6 +70,7 @@ export default function RootLayout() {
                 <Stack.Screen name="checkout" options={{ headerShown: true, presentation: 'card' }} />
                 <Stack.Screen name="contactus" options={{ headerShown: true, presentation: 'card' }} />
                 <Stack.Screen name="personal-info" options={{ headerShown: true, presentation: 'card' }} />
+                <Stack.Screen name="wallet" options={{ headerShown: true, presentation: 'card' }} />
                 <Stack.Screen name="notifications" options={{ headerShown: true , presentation: 'modal'}} />
 
                 <Stack.Screen name="+not-found" />
