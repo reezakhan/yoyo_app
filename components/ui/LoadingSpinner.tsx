@@ -8,7 +8,7 @@ interface LoadingSpinnerProps {
   style?: any;
 }
 
-export function LoadingSpinner({ size = 'large', color, style }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = 'large', color='black', style }: LoadingSpinnerProps) {
   const defaultColor = useThemeColor({}, 'primary');
 
   return (
