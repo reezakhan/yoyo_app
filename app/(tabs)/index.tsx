@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect, useEffect, useRef } from "react"
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Pressable, Image, RefreshControl, Alert, Animated, Modal, TouchableWithoutFeedback, TextInput } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, Pressable, Image, RefreshControl, Alert, Animated } from "react-native"
 import { Svg, Path, Line, Circle } from "react-native-svg"
 import { useNavigation } from "@react-navigation/native"
 import { router } from "expo-router"
@@ -16,15 +16,28 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { TimeRangePicker } from '@/components/ui/TimeRangePicker'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
+// SVG Icons as components
+const MagnifyingGlassIcon = ({ size = 24, color = "currentColor" }) => (
+  <Svg width={size} height={size} viewBox="0 0 256 256" fill={color}>
+    <Path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+  </Svg>
+)
 
-// Quick filter data structure (example)
-const quickFilters = [
-  { id: 'popular', label: 'Popular' },
-  { id: 'beachfront', label: 'Beachfront' },
-  { id: 'deals', label: 'Deals' },
-  { id: 'luxury', label: 'Luxury' },
-  { id: 'budget', label: 'Budget' },
-];
+const LocationIcon = ({ size = 20, color = "currentColor" }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <Path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <Circle cx="12" cy="10" r="3" />
+  </Svg>
+)
 
 interface LocationState {
   coordinates: { lat: number; lng: number } | null
@@ -46,16 +59,6 @@ interface SearchFilters {
   sortBy?: string;
 }
 
-interface Booking {
-  id: string;
-  hotelName: string;
-  checkInDate: string;
-  checkOutDate: string;
-  guests: number;
-  totalAmount: number;
-  status: 'completed' | 'upcoming' | 'cancelled';
-}
-
 export default function HotelBookingApp() {
   const [location, setLocation] = useState<LocationState>({
     coordinates: null,
@@ -68,27 +71,19 @@ export default function HotelBookingApp() {
   const [filters, setFilters] = useState<SearchFilters>({
     sortBy: 'recommended'
   });
-
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [isFilterSticky, setIsFilterSticky] = useState(false);
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [stickyHeaderVisible, setStickyHeaderVisible] = useState(false);
 
   const navigation = useNavigation()
   const scrollY = useRef(new Animated.Value(0)).current
   const filterSectionY = useRef(0);
-  const headerHeight = useRef(0); // To store the height of the header
 
   const { addToWishlist, removeFromWishlistByHotelId, isInWishlist, forceRefresh } = useWishlist()
   const { getUpcomingBookings } = useBookings()
 
-  // Get upcoming and completed bookings
+  // Get upcoming bookings
   const upcomingBookings = getUpcomingBookings()
   const nextBooking = upcomingBookings.length > 0 ? upcomingBookings[0] : null
-
-  // State for Review Modal
-  const [reviewModalVisible, setReviewModalVisible] = useState(false);
-  const [currentBookingForReview, setCurrentBookingForReview] = useState<Booking | null>(null);
-  const [overallRating, setOverallRating] = useState(0);
-  const [comment, setComment] = useState('');
 
   // Use only nearby hotels hook
   const nearbyData = useNearbyHotels(location.coordinates, filters)
@@ -121,13 +116,13 @@ export default function HotelBookingApp() {
         break;
     }
     setFilters(newFilters);
-   
+    setFiltersApplied(getActiveFiltersCount() > 0);
   };
 
   const handleFilterChange = (newFilters: SearchFilters) => {
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
- 
+    setFiltersApplied(getActiveFiltersCount() > 0);
   };
 
   // Wishlist handlers
@@ -281,33 +276,10 @@ export default function HotelBookingApp() {
       useNativeDriver: false,
       listener: (event: any) => {
         const currentY = event.nativeEvent.contentOffset.y;
-        // Adjust the threshold based on the header's height if it's dynamic,
-        // or use a fixed value if the header height is known and constant.
-        // For now, assuming header is around 100px.
-        
-        setIsFilterSticky(currentY > filterSectionY.current - headerHeight.current);
+        setStickyHeaderVisible(currentY > filterSectionY.current);
       }
     }
   );
-
-
-
-  // Function to open the review modal
-  const openReviewModal = (booking: Booking) => {
-    setCurrentBookingForReview(booking);
-    setOverallRating(0); // Reset rating for new review
-    setComment('');      // Reset comment for new review
-    setReviewModalVisible(true);
-  };
-
-  // Function to close the review modal
-  const closeReviewModal = () => {
-    setReviewModalVisible(false);
-    setComment('');
-    setOverallRating(0);
-    setCurrentBookingForReview(null);
-  };
-
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -349,16 +321,6 @@ export default function HotelBookingApp() {
       nearbyData.refresh()
     }
   }
-
-  // Filter tag rendering and toggling
-  const isFilterSelected = (filterId: string) => selectedFilters.includes(filterId);
-  const toggleFilter = (filterId: string) => {
-    setSelectedFilters(prev =>
-      prev.includes(filterId)
-        ? prev.filter(id => id !== filterId)
-        : [...prev, filterId]
-    );
-  };
 
   const renderFilterTag = (
     label: string,
@@ -589,9 +551,7 @@ export default function HotelBookingApp() {
           style={{ resizeMode: 'cover' }}
         />
 
-        {/* Pay at Hotel Badge - Conditionally render based on booking status */}
-        {/* This part needs to be dynamic based on the booking status for completed bookings */}
-        {/* For now, keeping the static display as per original structure */}
+        {/* Pay at Hotel Badge */}
         <View className="absolute top-3 left-3 bg-white px-3 py-1 rounded-full">
           <Text className="text-xs text-black" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
             Pay at hotel
@@ -661,73 +621,55 @@ export default function HotelBookingApp() {
 
           }
         </View>
+        {/* <View className="flex-row gap-2">
+          <TouchableOpacity
+            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex-1 active:bg-gray-100"
+            onPress={(e) => {
+              e.stopPropagation();
+              handleHourlyBooking(hotel, 3);
+            }}
+          >
+            <Text className="text-xs text-gray-800 text-center" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+              3hrs
+            </Text>
+            <Text className="text-sm text-black text-center" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              ₹{Math.round(hotel.price * 0.3).toLocaleString()}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex-1 active:bg-gray-100"
+            onPress={(e) => {
+              e.stopPropagation();
+              handleHourlyBooking(hotel, 6);
+            }}
+          >
+            <Text className="text-xs text-gray-800 text-center" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+              6hrs
+            </Text>
+            <Text className="text-sm text-black text-center" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              ₹{Math.round(hotel.price * 0.5).toLocaleString()}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex-1 active:bg-gray-100"
+            onPress={(e) => {
+              e.stopPropagation();
+              handleHourlyBooking(hotel, 9);
+            }}
+          >
+            <Text className="text-xs text-gray-800 text-center" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+              9hrs
+            </Text>
+            <Text className="text-sm text-black text-center" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+              ₹{Math.round(hotel.price * 0.7).toLocaleString()}
+            </Text>
+          </TouchableOpacity>
+        </View> */}
       </View>
     </Pressable>
   );
-
-
-  const renderBookingCard = (booking: Booking) => {
-    const isCompleted = booking.status === 'completed';
-    const checkInDate = new Date(booking.checkInDate);
-    const checkOutDate = new Date(booking.checkOutDate);
-
-    return (
-      <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 p-4">
-        <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-lg text-black" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-            {booking.hotelName}
-          </Text>
-          <TouchableOpacity
-            className={`px-3 py-1 rounded-full text-xs font-bold ${isCompleted
-              ? 'bg-green-100 text-green-800'
-              : booking.status === 'upcoming'
-                ? 'bg-blue-100 text-blue-800'
-                : 'bg-red-100 text-red-800'
-              }`}
-            style={{ fontFamily: 'PlusJakartaSans-Bold' }}
-          >
-            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-          </TouchableOpacity>
-        </View>
-        <Text className="text-sm text-gray-600 mb-1" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-          {checkInDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} - {checkOutDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-        </Text>
-        <Text className="text-sm text-gray-600 mb-3" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-          {booking.guests} guests
-        </Text>
-
-        {isCompleted ? (
-          <TouchableOpacity
-            className="bg-black py-3 rounded-lg items-center"
-            onPress={() => openReviewModal(booking)}
-          >
-            <Text className="text-white text-base" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-              Review Your Stay
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <View className="flex-row justify-between">
-            <TouchableOpacity
-              className="bg-gray-100 py-3 rounded-lg flex-1 mr-2 items-center"
-              onPress={() => router.push(`/booking-details/${booking.id}`)}
-            >
-              <Text className="text-black text-base" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                View Details
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-black py-3 rounded-lg flex-1 ml-2 items-center"
-              onPress={() => router.push(`/booking-details/${booking.id}`)} // Placeholder for payment flow
-            >
-              <Text className="text-white text-base" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                Pay Now
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
-  };
 
   const renderNextTrip = () => {
     if (!nextBooking) return null;
@@ -794,39 +736,25 @@ export default function HotelBookingApp() {
   );
 
 
+
   return (
     <View className="flex-1 bg-white">
       {/* Sticky Filter Header */}
-      {isFilterSticky && (
-        <View className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-100 pt-12 pb-3">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="px-6"
-            contentContainerStyle={{ paddingRight: 24 }}
-          >
-            {quickFilters.map((filter) => (
-              <TouchableOpacity
-                key={`sticky-${filter.id}`}
-                className={`mr-3 px-4 py-2 rounded-full border ${isFilterSelected(filter.id)
-                  ? 'bg-black border-black'
-                  : 'bg-white border-gray-300'
-                  }`}
-                onPress={() => toggleFilter(filter.id)}
-              >
-                <Text
-                  className={`text-sm ${isFilterSelected(filter.id)
-                    ? 'text-white'
-                    : 'text-gray-700'
-                    }`}
-                  style={{ fontFamily: 'PlusJakartaSans-Medium' }}
-                >
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+      {stickyHeaderVisible && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            backgroundColor: 'white',
+          }}
+        >
+          <SafeAreaView edges={['top']}>
+            {renderStickyFilterBar()}
+          </SafeAreaView>
+        </Animated.View>
       )}
 
       <ScrollView
@@ -849,21 +777,25 @@ export default function HotelBookingApp() {
         {/* Next Trip */}
         {renderNextTrip()}
 
-       
+        {/* Nearby Hotels Title */}
+        {/* <View className="px-4 mb-4">
+          <Text className="text-lg text-gray-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+            Nearby Hotels
+          </Text>
+        </View> */}
 
-
-        {/* Quick picks for you Section */}
+        {/* Quick Picks Filters */}
         <View
           className="px-4 mb-4"
           onLayout={(event) => {
             filterSectionY.current = event.nativeEvent.layout.y;
-            headerHeight.current = event.nativeEvent.layout.height; // Capture header height
           }}
         >
           <Text className="text-lg text-gray-900 " style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
             Quick picks for you
           </Text>
           {/* Filter Tabs */}
+
           {renderStickyFilterBar()}
         </View>
 
@@ -943,9 +875,10 @@ export default function HotelBookingApp() {
         visible={showTimeRangePicker}
         onClose={() => setShowTimeRangePicker(false)}
         showButton={false}
-      />
 
-      
+      />
     </View>
   )
 }
+
+

@@ -51,6 +51,7 @@ registerSheet('offers-filter', OffersActionSheet);
 registerSheet('modify-guest-name', ModifyGuestNameActionSheet);
 registerSheet(SHEET_IDS.ROOM_SELCTION, RoomSelectionSheet);
 registerSheet('review-sheet', ReviewSheet);
+registerSheet('reviews-action-sheet',ReviewsActionSheet)
 
 // Export the sheet IDs for type safety
 

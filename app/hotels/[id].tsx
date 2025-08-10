@@ -329,7 +329,7 @@ const HotelDetails = () => {
   // Handle booking
   const handleBookNow = () => {
     if (!areRoomsAvailable()) return;
-    console.log('selectedRoom ',selectedRoom)
+    console.log('selectedRoom ', selectedRoom)
     const bookingData = {
       hotelId: hotel.id,
       roomId: selectedRoom?.id || hotel.roomUpgradeData?.currentRoom?.id,
@@ -355,7 +355,7 @@ const HotelDetails = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner  text="Loading hotel details..." />;
+    return <LoadingSpinner text="Loading hotel details..." />;
   }
 
   if (error || !hotel) {
@@ -894,77 +894,64 @@ const HotelDetails = () => {
 
           {/* Rating Summary */}
           {hotel.reviewsData && (
-            <View className="bg-gray-50 rounded-lg p-4 mb-4">
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center">
-                  <Text className="text-2xl text-gray-900 mr-2" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                    {hotel.reviewsData.overallRating}
-                  </Text>
-                  <View className="flex-row">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Ionicons
-                        key={star}
-                        name="star"
-                        size={20}
-                        color={star <= Math.floor(hotel.reviewsData.overallRating) ? "#f59e0b" : "#d1d5db"}
-                      />
-                    ))}
-                  </View>
-                </View>
-                <Text className="text-sm text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
-                  {hotel.reviewsData.totalReviews} reviews
-                </Text>
+            <View className="bg-gray-50 rounded-lg p-6 mb-4 items-center">
+              <Text className="text-5xl text-gray-900 mb-2" style={{ fontFamily: 'PlusJakartaSans-ExtraBold' }}>
+                {hotel.reviewsData.overallRating?.toFixed(1) || '0.0'}
+              </Text>
+              <View className="flex-row items-center mb-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Ionicons
+                    key={star}
+                    name="star"
+                    size={20}
+                    color={star <= Math.floor(hotel.reviewsData.overallRating || 0) ? "#FCD34D" : "#D1D5DB"}
+                    style={{ marginHorizontal: 1 }}
+                  />
+                ))}
               </View>
-
-              {/* Rating Breakdown */}
-              <View className="space-y-1">
-                {Object.entries(hotel.reviewsData.ratingBreakdown)
-                  .sort(([a], [b]) => Number(b) - Number(a))
-                  .map(([rating, count]) => (
-                    <View key={rating} className="flex-row items-center">
-                      <Text className="text-xs text-gray-600 w-4" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                        {rating}
-                      </Text>
-                      <Ionicons name="star" size={12} color="#f59e0b" style={{ marginHorizontal: 4 }} />
-                      <View className="flex-1 bg-gray-200 rounded-full h-2 mx-2">
-                        <View
-                          className="bg-yellow-400 h-2 rounded-full"
-                          style={{ width: `${(Number(count) / hotel.reviewsData.totalReviews) * 100}%` }}
-                        />
-                      </View>
-                      <Text className="text-xs text-gray-600 w-8" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                        {count}
-                      </Text>
-                    </View>
-                  ))}
-              </View>
+              <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                {hotel.reviewsData.totalReviews} review{hotel.reviewsData.totalReviews !== 1 ? 's' : ''}
+              </Text>
             </View>
           )}
 
           {hotel.reviewsData?.reviews && hotel.reviewsData.reviews.length > 0 ? (
             <View className="space-y-4">
-              {hotel.reviewsData.reviews.slice(0, 3).map((review, index) => (
-                <View key={review.id || index} className="pb-4 border-b border-stone-100 last:border-b-0">
-                  <View className="flex-row items-center justify-between mb-2">
-                    <Text className="text-base text-stone-900" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
-                      {review.user}
-                    </Text>
-                    <View className="flex-row items-center">
-                      <Ionicons name="star" size={16} color="#f59e0b" />
-                      <Text className="text-sm text-stone-600 ml-1" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
-                        {review.rating}
+              {hotel.reviewsData.reviews.slice(0, 2).map((review, index) => (
+                <View key={review.id || index} className="bg-white rounded-lg p-4 border border-gray-100">
+                  <View className="flex-row items-center gap-3 mb-3">
+                    <View className="w-10 h-10 rounded-full bg-gray-200 items-center justify-center">
+                      <Text className="text-lg text-gray-600" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                        {(review.user || review.userName || 'A').charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base text-gray-900" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                        {review.user || review.userName || 'Anonymous Guest'}
+                      </Text>
+                      <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+                        {new Date(review.date).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
                       </Text>
                     </View>
                   </View>
-                  <Text className="text-sm text-stone-600 mb-1" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
+
+                  <View className="flex-row items-center gap-1 mb-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Ionicons
+                        key={star}
+                        name="star"
+                        size={20}
+                        color={star <= (review.rating || 0) ? "#FCD34D" : "#D1D5DB"}
+                      />
+                    ))}
+                  </View>
+
+                  <Text className="text-base leading-relaxed text-gray-700" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
                     {review.comment}
-                  </Text>
-                  <Text className="text-xs text-stone-400" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-                    {new Date(review.date).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
                   </Text>
                 </View>
               ))}

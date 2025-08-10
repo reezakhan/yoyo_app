@@ -38,7 +38,7 @@ const ReviewSheet = (props: any) => {
         comment: reviewComment.trim(),
       };
 
-      const response = await apiService.post('/details/review', reviewData);
+      const response = await apiService.post('/details/reviews', reviewData);
       
       if (response.success) {
         setReviewSubmitted(true);
