@@ -11,7 +11,6 @@ import {
   Linking,
   Platform,
   Dimensions,
-  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { SheetManager } from 'react-native-actions-sheet';
@@ -25,7 +24,6 @@ import * as Sharing from 'expo-sharing';
 import { useBookings } from '@/hooks/useBookings';
 import * as Clipboard from 'expo-clipboard';
 import { razorpayService } from '@/services/razorpay';
-import { Modal } from '@/components/ui/Modal';
 
 
 const BookingDetails = () => {
@@ -37,10 +35,8 @@ const BookingDetails = () => {
   const [cancelling, setCancelling] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const { refresh: refreshBookings } = useBookings();
-  const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
 
   const imageScrollViewRef = useRef<ScrollView>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -249,68 +245,8 @@ const BookingDetails = () => {
     }
   };
 
-  const handleSubmitReview = async () => {
-    if (!booking || !reviewComment.trim()) {
-      Alert.alert('Error', 'Please enter a comment for your review');
-      return;
-    }
 
-    try {
-      setSubmittingReview(true);
-      
-      const reviewData = {
-        bookingId: booking.id,
-        hotelId: booking.hotelId,
-        rating: reviewRating,
-        comment: reviewComment.trim(),
-      };
 
-      const response = await apiService.post('/reviews', reviewData);
-      
-      if (response.success) {
-        Alert.alert(
-          'Review Submitted',
-          'Thank you for your feedback!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setShowReviewModal(false);
-                setReviewComment('');
-                setReviewRating(5);
-              }
-            }
-          ]
-        );
-      } else {
-        Alert.alert('Error', response.error || 'Failed to submit review');
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to submit review');
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
-
-  const renderStars = (rating: number, onPress?: (rating: number) => void) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <TouchableOpacity
-          key={i}
-          onPress={() => onPress?.(i)}
-          disabled={!onPress}
-        >
-          <Star
-            size={32}
-            color={i <= rating ? '#FCD34D' : '#D1D5DB'}
-            fill={i <= rating ? '#FCD34D' : '#D1D5DB'}
-          />
-        </TouchableOpacity>
-      );
-    }
-    return stars;
-  };
 
   const formatDate = (dateString: string) => {
     // Remove the 'Z' to treat it as local time instead of UTC
@@ -326,15 +262,7 @@ const BookingDetails = () => {
     });
   };
 
-  const formatTime = (dateString: string) => {
-    console.log('dateString', dateString);
-    const date = new Date(dateString); // Don't add 'Z'
-    return date.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
+
 
   // Refund helper functions
   const getRefundStatusIcon = (status) => {
@@ -656,7 +584,7 @@ const BookingDetails = () => {
       <StatusBar barStyle="dark-content" />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-       
+
         {
           !booking.refundInfo && <View className="w-full h-64 overflow-hidden">
             <ScrollView
@@ -1294,7 +1222,15 @@ const BookingDetails = () => {
               {booking.status === 'completed' ? (
                 <TouchableOpacity
                   className="flex-1 py-2 px-4 rounded-lg bg-black"
-                  onPress={() => setShowReviewModal(true)}
+                  onPress={() => SheetManager.show('review-sheet', {
+                    payload: {
+                      booking: booking,
+                      onReviewSubmitted: () => {
+                        // Optional: refresh booking details or show success message
+                        console.log('Review submitted successfully');
+                      }
+                    }
+                  })}
                 >
                   <Text className="text-center text-white text-lg mb-1" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                     Review your stay
@@ -1350,76 +1286,7 @@ const BookingDetails = () => {
         </View>
       )}
 
-      {/* Review Modal */}
-      <Modal
-        visible={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        animationType="slide"
-      >
-        <View className="bg-white rounded-t-3xl px-6 py-6" style={{ width: 350, maxHeight: 500 }}>
-          {/* Header */}
-          <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-2xl text-gray-900" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-              Review your stay
-            </Text>
-            <TouchableOpacity onPress={() => setShowReviewModal(false)} className="p-2">
-              <X size={24} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
 
-          {/* Hotel Info */}
-          <View className="mb-6">
-            <Text className="text-lg text-gray-900 mb-1" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
-              {booking.hotelName}
-            </Text>
-            <Text className="text-sm text-gray-500" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
-              {booking.roomType}
-            </Text>
-          </View>
-
-          {/* Rating */}
-          <View className="mb-6">
-            <Text className="text-lg text-gray-900 mb-3" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
-              Overall rating
-            </Text>
-            <View className="flex-row items-center gap-2">
-              {renderStars(reviewRating, setReviewRating)}
-            </View>
-          </View>
-
-          {/* Comment */}
-          <View className="mb-6">
-            <Text className="text-lg text-gray-900 mb-3" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
-              Share your experience
-            </Text>
-            <TextInput
-              className="border border-gray-300 rounded-lg p-4 text-base h-24"
-              style={{ fontFamily: 'PlusJakartaSans-Regular', textAlignVertical: 'top' }}
-              placeholder="Tell us about your stay..."
-              placeholderTextColor="#9CA3AF"
-              value={reviewComment}
-              onChangeText={setReviewComment}
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            className={`w-full py-4 rounded-lg items-center ${submittingReview ? 'bg-gray-400' : 'bg-black'}`}
-            onPress={handleSubmitReview}
-            disabled={submittingReview}
-          >
-            {submittingReview ? (
-              <LoadingSpinner size="small" color="white" />
-            ) : (
-              <Text className="text-white text-lg" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
-                Submit Review
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </Modal>
 
     </SafeAreaView>
   );

@@ -17,6 +17,7 @@ import { AmenitiesFilterActionSheet } from '@/components/ui/AmenitiesFilterActio
 import { OffersActionSheet } from '@/components/ui/OffersActionSheet';
 import { ModifyGuestNameActionSheet } from '@/components/ui/ModifyGuestNameActionSheet';
 import { RoomSelectionSheet } from '@/components/ui/RoomSelectionSheet';
+import ReviewSheet from '@/components/ui/ReviewSheet';
 
 export const SHEET_IDS = {
   PROFILE_OPTIONS: 'profile-options',
@@ -49,7 +50,7 @@ registerSheet('amenities-filter', AmenitiesFilterActionSheet);
 registerSheet('offers-filter', OffersActionSheet);
 registerSheet('modify-guest-name', ModifyGuestNameActionSheet);
 registerSheet(SHEET_IDS.ROOM_SELCTION, RoomSelectionSheet);
-
+registerSheet('review-sheet', ReviewSheet);
 
 // Export the sheet IDs for type safety
 
