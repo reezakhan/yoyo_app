@@ -357,3 +357,59 @@ export function useOffersHotels() {
     refresh,
   };
 }
+
+// Hook for featured hotels
+export function useFeaturedHotels() {
+  const [hotels, setHotels] = useState<MockHotel[]>([]);
+  const [banners, setBanners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchFeaturedHotels = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      const response = await apiService.get('/search/featured', { params: { limit: 10 } });
+
+      if (response.success) {
+        const transformedHotels = response.data.hotels?.map(transformHotel) || [];
+        setHotels(transformedHotels);
+        setBanners(response.data.banners || []);
+      } else {
+        setError(response.error || 'Failed to fetch featured hotels');
+        setHotels([]);
+        setBanners([]);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while fetching featured hotels');
+      setHotels([]);
+      setBanners([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const refresh = () => {
+    fetchFeaturedHotels(true);
+  };
+
+  useEffect(() => {
+    fetchFeaturedHotels();
+  }, []);
+
+  return {
+    hotels,
+    banners,
+    loading,
+    error,
+    refreshing,
+    refresh,
+  };
+}

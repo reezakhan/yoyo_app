@@ -605,6 +605,75 @@ class ApiService {
       }
     }
 
+    if (url.includes('/configurations/app_maintenance_mode') && method === 'GET') {
+      return {
+        success: true,
+        data: {
+          id: 'd4757830-35d9-451c-ba4a-b8c05fe9308e',
+          key: 'app_maintenance_mode',
+          value: false, // Set to true to test maintenance mode
+          type: 'boolean',
+          description: 'Enable/disable app maintenance mode',
+          category: 'app',
+          isActive: true,
+          createdAt: '2025-08-10T14:10:40.000Z',
+          updatedAt: '2025-08-10T14:36:45.000Z'
+        } as T,
+        message: 'Maintenance mode configuration fetched successfully'
+      };
+    }
+
+    if (url.includes('/search/featured') && method === 'GET') {
+      const featuredHotels = mockHotels.slice(0, 8).map(hotel => ({
+        ...hotel,
+        offer: 'Featured Deal',
+        originalPrice: hotel.price + 50
+      }));
+
+      return {
+        success: true,
+        data: {
+          hotels: featuredHotels,
+          banners: [
+            {
+              id: 'banner1',
+              imageUrl: 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=800',
+              couponCode: 'FEATURED20',
+              title: 'Special Featured Hotels'
+            },
+            {
+              id: 'banner2', 
+              imageUrl: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800',
+              couponCode: 'LUXURY15',
+              title: 'Luxury Stay Deals'
+            }
+          ],
+          total: featuredHotels.length
+        } as T,
+        message: 'Featured hotels fetched successfully'
+      };
+    }
+
+    if (url.includes('/details/review') && method === 'POST') {
+      const { bookingId, rating, comment } = config.data || {};
+
+      return {
+        success: true,
+        data: {
+          id: `review-${Date.now()}`,
+          userId: 'user-123',
+          hotelId: `hotel-${Date.now()}`,
+          bookingId,
+          rating,
+          comment,
+          isVerified: true,
+          isApproved: true,
+          createdAt: new Date().toISOString()
+        } as T,
+        message: 'Review created successfully'
+      };
+    }
+
     // Default mock response
     return {
       success: true,

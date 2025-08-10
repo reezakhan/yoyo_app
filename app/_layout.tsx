@@ -72,6 +72,7 @@ export default function RootLayout() {
                 <Stack.Screen name="personal-info" options={{ headerShown: true, presentation: 'card' }} />
                 <Stack.Screen name="wallet" options={{ headerShown: true, presentation: 'card' }} />
                 <Stack.Screen name="notifications" options={{ headerShown: true , presentation: 'modal'}} />
+                <Stack.Screen name="maintenance_mode" options={{ headerShown: false }} />
 
                 <Stack.Screen name="+not-found" />
               </Stack>

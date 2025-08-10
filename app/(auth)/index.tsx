@@ -5,11 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function AuthIndex() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, isMaintenanceMode, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated && user) {
+      if (isMaintenanceMode) {
+        router.replace('/maintenance_mode');
+      } else if (isAuthenticated && user) {
         router.replace('/(tabs)');
         // if (user.hasOnboarded) {
         //   router.replace('/(tabs)');
@@ -20,7 +22,7 @@ export default function AuthIndex() {
         router.replace('/(auth)/login');
       }
     }
-  }, [isAuthenticated, isLoading, user]);
+  }, [isAuthenticated, isLoading, isMaintenanceMode, user]);
 
   return (
     <View style={styles.container}>

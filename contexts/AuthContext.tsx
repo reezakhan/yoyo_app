@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   getAuth,
   signInWithPhoneNumber,
@@ -26,6 +26,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isMaintenanceMode: boolean;
 
   // Auth methods
   sendOTP: (phoneNumber: string, customerType: string) => Promise<any>;
@@ -81,15 +82,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // }
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+
 
   const isAuthenticated = !!user;
 
   useEffect(() => {
     initializeAuth();
-    
+
     // Setup notification listeners
     const cleanup = NotificationService.setupNotificationListeners();
-    
+
     return cleanup;
   }, []);
 
@@ -259,7 +262,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Remove notification token from backend
       await NotificationService.removeTokenFromBackend();
-      
+
       // Clear local notification token
       await NotificationService.clearLocalToken();
 
@@ -304,7 +307,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Update stored user data
         await AsyncStorage.setItem('userProfile', JSON.stringify(updatedUser));
-       
+
         if(updatedUser.hasOnboarded){
           router.replace('/(tabs)');
         }else{
@@ -329,10 +332,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const checkMaintenanceMode = async () => {
+    try {
+      const response = await apiService.get('/configurations/app_maintenance_mode');
+      if (response.success) {
+        setIsMaintenanceMode(response.data.value === true);
+      }
+    } catch (error) {
+      console.error('Maintenance mode check failed:', error);
+      setIsMaintenanceMode(false);
+    }
+  };
+
+  const checkAuthState = async () => {
+    try {
+      // Check maintenance mode first
+      await checkMaintenanceMode();
+
+      const token = await AsyncStorage.getItem('accessToken');
+
+      if (token) {
+        const response = await apiService.get('/auth/me');
+
+        if (response.success) {
+          setUser(response.data.user);
+          setIsAuthenticated(true);
+        } else {
+          await clearAuthData();
+        }
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      await clearAuthData();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
     isAuthenticated,
+    isMaintenanceMode,
     register,
     logout,
     refreshUser,
@@ -342,7 +383,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider 
+      value={{
+        isAuthenticated,
+        isLoading,
+        isMaintenanceMode,
+        user,
+        login,
+        register,
+        logout,
+        updateUser,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

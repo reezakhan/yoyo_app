@@ -16,36 +16,36 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 const ReviewSheet = (props: any) => {
   const { payload } = props;
   const booking = payload?.booking;
-  
+
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   const handleSubmitReview = async () => {
-    if (!booking || !reviewComment.trim()) {
-      Alert.alert('Error', 'Please enter a comment for your review');
+    if (!reviewRating || !reviewComment.trim()) {
+      Alert.alert('Missing Information', 'Please provide both rating and comment.');
       return;
     }
 
+    setSubmittingReview(true);
     try {
-      setSubmittingReview(true);
-      
       const reviewData = {
-        bookingId: booking.id,
-        hotelId: booking.hotelId,
+        bookingId: booking?.id,
         rating: reviewRating,
         comment: reviewComment.trim(),
       };
 
       const response = await apiService.post('/details/reviews', reviewData);
-      
+
       if (response.success) {
         setReviewSubmitted(true);
         payload?.onReviewSubmitted?.();
-        
-        // Auto close after 2 seconds
+        // Close the review sheet after showing success
         setTimeout(() => {
+          setReviewSubmitted(false);
+          setReviewRating(5);
+          setReviewComment('');
           props.sheetRef?.current?.hide();
         }, 2000);
       } else {
@@ -127,11 +127,11 @@ const ReviewSheet = (props: any) => {
             <View className="w-20 h-20 bg-green-100 rounded-full items-center justify-center mb-6">
               <CheckCircle size={40} color="#10B981" />
             </View>
-            
+
             <Text className="text-2xl text-gray-900 text-center mb-3" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
               Thank you for your review!
             </Text>
-            
+
             <Text className="text-base text-gray-600 text-center mb-6" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
               Your feedback helps us improve our service and helps other travelers make better choices.
             </Text>
@@ -141,19 +141,33 @@ const ReviewSheet = (props: any) => {
               <Text className="text-sm text-gray-500 text-center mb-2" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                 Your Review
               </Text>
-              
+
               <Text className="text-lg text-gray-900 text-center mb-3" style={{ fontFamily: 'PlusJakartaSans-SemiBold' }}>
                 {booking?.hotelName}
               </Text>
-              
+
               <View className="flex-row items-center justify-center mb-3">
                 {renderStars(reviewRating)}
               </View>
-              
+
               <Text className="text-sm text-gray-700 text-center" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
                 "{reviewComment}"
               </Text>
             </View>
+            
+            <TouchableOpacity
+              onPress={() => {
+                setReviewSubmitted(false);
+                setReviewRating(5);
+                setReviewComment('');
+                props.sheetRef?.current?.hide();
+              }}
+              className="w-full h-12 bg-green-600 rounded-lg items-center justify-center"
+            >
+              <Text className="text-base text-white" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
+                Done
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
           // Review Form
@@ -169,22 +183,22 @@ const ReviewSheet = (props: any) => {
                       style={{ resizeMode: 'cover' }}
                     />
                   )}
-                  
+
                   <Text className="text-xl text-gray-900 mb-2" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                     {booking?.hotelName}
                   </Text>
-                  
+
                   <View className="flex-row items-center mb-2">
                     <MapPin size={16} color="#6B7280" />
                     <Text className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
                       {booking?.address}
                     </Text>
                   </View>
-                  
+
                   <Text className="text-base text-gray-700" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                     {booking?.roomType}
                   </Text>
-                  
+
                   <View className="flex-row items-center mt-2">
                     <Calendar size={14} color="#6B7280" />
                     <Text className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
@@ -201,12 +215,12 @@ const ReviewSheet = (props: any) => {
                 <Text className="text-xl text-gray-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                   How was your overall experience?
                 </Text>
-                
+
                 <View className="bg-gray-50 rounded-xl p-6 items-center">
                   <View className="flex-row items-center gap-3 mb-4">
                     {renderStars(reviewRating, setReviewRating)}
                   </View>
-                  
+
                   <Text className="text-base text-gray-700" style={{ fontFamily: 'PlusJakartaSans-Medium' }}>
                     {reviewRating === 5 && "Excellent!"}
                     {reviewRating === 4 && "Very Good"}
@@ -222,7 +236,7 @@ const ReviewSheet = (props: any) => {
                 <Text className="text-xl text-gray-900 mb-4" style={{ fontFamily: 'PlusJakartaSans-Bold' }}>
                   Tell us more about your stay
                 </Text>
-                
+
                 <View className="bg-gray-50 rounded-xl p-4">
                   <TextInput
                     className="text-base min-h-32"
@@ -235,7 +249,7 @@ const ReviewSheet = (props: any) => {
                     numberOfLines={6}
                   />
                 </View>
-                
+
                 <Text className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'PlusJakartaSans-Regular' }}>
                   Your review will help other travelers and the property improve their service.
                 </Text>
